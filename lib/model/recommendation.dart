@@ -123,6 +123,7 @@ class RecommendationFdaDrug {
   String? relationWithFood;
   String? specialInstructions;
   String? routeOfAdministration;
+  String? registrationNumber;
 
   RecommendationFdaDrug({
      this.name,
@@ -139,6 +140,7 @@ class RecommendationFdaDrug {
      this.relationWithFood,
      this.specialInstructions,
      this.routeOfAdministration,
+     this.registrationNumber,
   });
 
   factory RecommendationFdaDrug.fromJson(Map<String, dynamic> json) {
@@ -157,6 +159,7 @@ class RecommendationFdaDrug {
       relationWithFood: json['relationWithFood'],
       specialInstructions: json['specialInstructions'],
       routeOfAdministration: json['routeOfAdministration'],
+      registrationNumber: json['registrationNumber'],
     );
   }
 }

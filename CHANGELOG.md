@@ -16,3 +16,6 @@
 ## 0.0.1
 ## 0.0.2
 * update dependency 
+
+## 0.0.3
+* update medication class
