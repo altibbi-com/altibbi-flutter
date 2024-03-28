@@ -29,7 +29,6 @@ export 'package:sendbird_chat_sdk/src/public/main/handler/connection_handler.dar
 export 'package:sendbird_chat_sdk/src/public/main/handler/session_handler.dart';
 export 'package:sendbird_chat_sdk/src/public/main/handler/user_event_handler.dart';
 export 'package:sendbird_chat_sdk/src/public/main/model/channel/group_channel_change_logs.dart';
-export 'package:sendbird_chat_sdk/src/public/main/model/channel/group_channel_filter.dart';
 export 'package:sendbird_chat_sdk/src/public/main/model/channel/group_channel_unread_item_count.dart';
 export 'package:sendbird_chat_sdk/src/public/main/model/chat/do_not_disturb.dart';
 export 'package:sendbird_chat_sdk/src/public/main/model/chat/emoji.dart';

@@ -14,3 +14,5 @@
 * Ability to download Altibbi PDF recommendations
 *
 ## 0.0.1
+## 0.0.2
+* update dependency 
