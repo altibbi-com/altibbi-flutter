@@ -11,8 +11,8 @@ dependencies:
   flutter:
     sdk: flutter
   plugin_platform_interface:  ^2.1.8
-  sendbird_chat_sdk: ^4.2.5
-  http: ^0.13.6
+  sendbird_chat_sdk: ^4.2.10
+  http: ^1.2.1
   pusher_channels_flutter: ^2.2.1
 
 dev_dependencies:

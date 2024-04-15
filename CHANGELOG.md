@@ -19,3 +19,6 @@
 
 ## 0.0.3
 * update medication class
+
+## 0.0.4
+* update package
