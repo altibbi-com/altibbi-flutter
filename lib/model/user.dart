@@ -13,6 +13,7 @@ class User {
   String? bloodType;
   String? smoker;
   String? alcoholic;
+  String? relationType;
   String? maritalStatus;
   String? createdAt;
   String? updatedAt;
@@ -33,6 +34,7 @@ class User {
     this.bloodType,
     this.smoker,
     this.alcoholic,
+    this.relationType,
     this.maritalStatus,
     this.createdAt,
     this.updatedAt
@@ -54,6 +56,7 @@ class User {
     smoker = json['smoker'] as String?;
     alcoholic = json['alcoholic'] as String?;
     maritalStatus = json['marital_status'] as String?;
+    relationType = json['relation_type'] as String?;
     createdAt = json['created_at'] as String?;
     updatedAt = json['updated_at'] as String?;
   }
@@ -70,6 +73,7 @@ class User {
       'height': height,
       'weight': weight,
       'blood_type': bloodType,
+      'relation_type': relationType,
       'smoker': smoker,
       'alcoholic': alcoholic,
       'marital_status': maritalStatus,

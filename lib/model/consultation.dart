@@ -30,6 +30,8 @@ class Consultation {
   VoipConfig? videoConfig;
   ChatHistory? chatHistory;
   Recommendation? recommendation;
+  int?  doctorAverageRating;
+
 
   Consultation({
     this.id,
@@ -54,6 +56,7 @@ class Consultation {
     this.recommendation,
     this.doctorName,
     this.doctorAvatar,
+    this.doctorAverageRating,
   });
 
   factory Consultation.fromJson(Map<String, dynamic> json) {
@@ -82,6 +85,7 @@ class Consultation {
           ?.map((item) => Consultation.fromJson(item as Map<String, dynamic>))
           .toList(),
       pusherChannel: json['pusherChannel'] as String?,
+      doctorAverageRating: json['doctor_average_rating'] as int?,
       pusherApiKey: json['pusherAppKey'] as String?,
       chatConfig: json['chatConfig'] != null ? ChatConfig.fromJson(
           json['chatConfig'] as Map<String, dynamic>) : null,

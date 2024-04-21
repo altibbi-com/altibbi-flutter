@@ -302,4 +302,16 @@ class ApiService {
       throw Exception('Error : ${response.body}');
     }
   }
+
+  Future<bool> rateConsultation(int consultationID, int score) async {
+    final response = await callApi(
+        endpoint: 'consultations/$consultationID/rate',
+        method: "post",
+        body: {"score": score});
+
+    if(response.statusCode == 200){
+      return true ;
+    }
+    throw Exception(response.body);
+  }
 }
