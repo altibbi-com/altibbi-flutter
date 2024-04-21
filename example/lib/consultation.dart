@@ -146,6 +146,10 @@ class _ConsultationState extends State<Consultation> {
     print("Consultation List Length = ${consultationList.length}");
   }
 
+  void rateConsultation () async {
+    var rated = await apiService.rateConsultation(154, 5);
+    print("consultation rated : $rated");
+  }
   @override
   Widget build(BuildContext context) {
     return Scaffold(
