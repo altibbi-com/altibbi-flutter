@@ -22,3 +22,8 @@
 
 ## 0.0.4
 * update package
+
+## 0.0.5
+* add rate consultation functionality 
+* add relation type for user 
+* add doctor rate 
