@@ -1,6 +1,6 @@
 name: altibbi
 description: Altibbi's Flutter SDK provides real-time, 24/7 connection to certified doctors via a suite of communication channels including GSM, VOIP, chat, and video.
-version: 0.0.5
+version: 0.0.6
 homepage: https://altibbi.com/
 
 environment:

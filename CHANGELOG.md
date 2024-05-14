@@ -27,3 +27,6 @@
 * add rate consultation functionality 
 * add relation type for user 
 * add doctor rate 
+
+## 0.0.6
+* error handle
