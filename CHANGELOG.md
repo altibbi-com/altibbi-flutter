@@ -33,3 +33,6 @@
 
 ## 0.0.7
 * rate consultation to be double 
+
+## 0.0.8
+* rate consultation to be int 

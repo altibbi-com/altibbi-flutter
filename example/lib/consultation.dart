@@ -154,8 +154,7 @@ class _ConsultationState extends State<Consultation> {
   }
 
   void rateConsultation () async {
-    double score = 4.5 ;
-    var rated = await apiService.rateConsultation(154, score);
+    var rated = await apiService.rateConsultation(226, 4);
     print("consultation rated : $rated");
   }
   @override
