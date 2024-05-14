@@ -1,4 +1,6 @@
 
+import 'dart:ffi';
+
 import 'package:altibbi/model/media.dart';
 import 'package:altibbi/model/recommendation.dart';
 import 'package:altibbi/model/user.dart';
@@ -30,7 +32,7 @@ class Consultation {
   VoipConfig? videoConfig;
   ChatHistory? chatHistory;
   Recommendation? recommendation;
-  int?  doctorAverageRating;
+  Double?  doctorAverageRating;
 
 
   Consultation({
@@ -85,7 +87,7 @@ class Consultation {
           ?.map((item) => Consultation.fromJson(item as Map<String, dynamic>))
           .toList(),
       pusherChannel: json['pusherChannel'] as String?,
-      doctorAverageRating: json['doctor_average_rating'] as int?,
+      doctorAverageRating: json['doctor_average_rating'] as Double?,
       pusherApiKey: json['pusherAppKey'] as String?,
       chatConfig: json['chatConfig'] != null ? ChatConfig.fromJson(
           json['chatConfig'] as Map<String, dynamic>) : null,
