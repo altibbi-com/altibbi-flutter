@@ -1,6 +1,4 @@
 
-import 'dart:ffi';
-
 import 'package:altibbi/model/media.dart';
 import 'package:altibbi/model/recommendation.dart';
 import 'package:altibbi/model/user.dart';
