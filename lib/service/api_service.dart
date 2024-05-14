@@ -303,7 +303,7 @@ class ApiService {
     }
   }
 
-  Future<bool> rateConsultation(int consultationID, int score) async {
+  Future<bool> rateConsultation(int consultationID, double score) async {
     final response = await callApi(
         endpoint: 'consultations/$consultationID/rate',
         method: "post",
