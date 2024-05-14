@@ -30,3 +30,6 @@
 
 ## 0.0.6
 * error handle
+
+## 0.0.7
+* rate consultation to be double 
