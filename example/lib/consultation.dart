@@ -7,7 +7,7 @@ import 'package:flutter/material.dart';
 import 'package:images_picker/images_picker.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:open_filex/open_filex.dart';
-
+import 'package:http/http.dart' as http;
 class Consultation extends StatefulWidget {
   const Consultation({Key? key}) : super(key: key);
 
@@ -112,21 +112,28 @@ class _ConsultationState extends State<Consultation> {
       if(path != null){
          media = await apiService.uploadMedia(File(path!));
       }
-      var consultation = await apiService.createConsultation(
+      try{
+        var consultation = await apiService.createConsultation(
           question: questionBody.text,
           medium: selectedMedium,
           userID: 1, //Assigning consultation to User ID
           mediaIDs: media != null ? [media.id] : [] ,
-      );
-      if(consultation  != null && consultation.pusherChannel != null){
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) =>
-              WaitingRoom(pusherID: consultation.pusherChannel!, id: consultation.id!, pusherApiKey: consultation.pusherApiKey!)
-          ),
         );
+        if(consultation  != null && consultation.pusherChannel != null){
+          Navigator.push(
+            context,
+            MaterialPageRoute(builder: (context) =>
+                WaitingRoom(pusherID: consultation.pusherChannel!, id: consultation.id!, pusherApiKey: consultation.pusherApiKey!)
+            ),
+          );
+        }
+      } catch(error){
+        if(error is http.Response){
+          print(error.statusCode);
+        }
       }
     }
+
   }
   void getLastConsultation() async{
     var consultation = await apiService.getLastConsultation();

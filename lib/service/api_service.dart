@@ -85,7 +85,7 @@ class ApiService {
       final user = User.fromJson(responseData);
       return user;
     } else {
-      throw Exception('Error ${response.body}');
+      throw Exception(response);
     }
   }
 
@@ -105,7 +105,7 @@ class ApiService {
           responseData.map((json) => User.fromJson(json)).toList();
       return users;
     } else {
-      throw Exception('Error : ${response.body}');
+      throw Exception(response);
     }
   }
 
@@ -120,7 +120,7 @@ class ApiService {
       final createdUser = User.fromJson(responseData);
       return createdUser;
     } else {
-      throw Exception('Failed to create user ${response.body}');
+     throw Exception(response);
     }
   }
 
@@ -135,7 +135,7 @@ class ApiService {
       final updatedUser = User.fromJson(responseData);
       return updatedUser;
     } else {
-      throw Exception('Error ${response.body}');
+      throw Exception(response);
     }
   }
 
@@ -147,7 +147,7 @@ class ApiService {
     if (response.statusCode == 204) {
       return true;
     } else {
-      throw Exception('Error : ${response.body}');
+      throw Exception(response);
     }
   }
 
@@ -179,7 +179,7 @@ class ApiService {
           responseData.map((json) => Consultation.fromJson(json)).toList();
       return consultations;
     } else {
-      throw Exception('Error: ${response.body}');
+      throw Exception(response);
     }
   }
 
@@ -209,7 +209,7 @@ class ApiService {
       final createdConsultation = Consultation.fromJson(responseData);
       return createdConsultation;
     } else {
-      throw Exception('Error : ${response.body}');
+      throw response;
     }
   }
 
@@ -228,7 +228,7 @@ class ApiService {
       final consultation = Consultation.fromJson(responseData);
       return consultation;
     } else {
-      throw Exception('Error : ${response.body}');
+      throw Exception(response);
     }
   }
 
@@ -247,7 +247,7 @@ class ApiService {
       final consultation = Consultation.fromJson(responseData[0]);
       return consultation;
     } else {
-      throw Exception('Error : ${response.body}');
+      throw Exception(response);
     }
   }
 
@@ -260,7 +260,7 @@ class ApiService {
     if (response.statusCode == 204) {
       return true;
     } else {
-      throw Exception('Error : ${response.body}');
+      throw Exception(response);
     }
   }
 
@@ -273,7 +273,7 @@ class ApiService {
     if (response.statusCode == 200) {
       return true;
     } else {
-      throw Exception('Error : ${response.body}');
+      throw Exception(response);
     }
   }
 
@@ -286,7 +286,7 @@ class ApiService {
       final media = Media.fromJson(responseData);
       return media;
     } else {
-      throw Exception('Error : ${response.body}');
+      throw Exception(response);
     }
   }
 
@@ -299,7 +299,7 @@ class ApiService {
       final file = await File(savePath).writeAsBytes(response.bodyBytes);
       return file.path;
     } else {
-      throw Exception('Error : ${response.body}');
+      throw Exception(response);
     }
   }
 
@@ -312,6 +312,6 @@ class ApiService {
     if(response.statusCode == 200){
       return true ;
     }
-    throw Exception(response.body);
+   throw Exception(response);
   }
 }
