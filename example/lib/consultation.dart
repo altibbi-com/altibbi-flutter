@@ -153,6 +153,17 @@ class _ConsultationState extends State<Consultation> {
     print("Consultation List Length = ${consultationList.length}");
   }
 
+  void getAiSupport () async {
+    var predictSummary = await apiService.getPredictSummary(148);
+    var transcription = await apiService.getTranscription(146);
+    var soap = await apiService.getSoapSummary(147);
+    var predictSpecialty = await apiService.getPredictSpecialty(149);
+    print("Consultation List Length predictSummary= ${predictSummary.summary}");
+    print("Consultation List Length transcription= ${transcription.transcript}");
+    print("Consultation List Length soap= ${soap.summary}");
+    print("Consultation List Length predictSpecialty= ${predictSpecialty[0].specialtyId}");
+  }
+
   void rateConsultation () async {
     var rated = await apiService.rateConsultation(226, 4);
     print("consultation rated : $rated");
@@ -324,6 +335,21 @@ class _ConsultationState extends State<Consultation> {
                     onPressed: getConsultationList,
                     child: const Text(
                       "get consultation list",
+                      style: TextStyle(color: Colors.white, fontSize: 20),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 30),
+                Container(
+                  width: double.infinity,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF0099D1),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: TextButton(
+                    onPressed: getAiSupport,
+                    child: const Text(
+                      "get ai support ",
                       style: TextStyle(color: Colors.white, fontSize: 20),
                     ),
                   ),
