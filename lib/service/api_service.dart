@@ -3,6 +3,10 @@ import 'package:altibbi/altibbi_service.dart';
 import 'package:altibbi/enum.dart';
 import 'package:altibbi/model/media.dart';
 import 'package:altibbi/model/consultation.dart';
+import 'package:altibbi/model/predict_specialty.dart';
+import 'package:altibbi/model/predict_summary.dart';
+import 'package:altibbi/model/soap.dart';
+import 'package:altibbi/model/transcription.dart';
 import 'package:altibbi/model/user.dart';
 import 'dart:io';
 import 'package:http/http.dart' as http;
@@ -27,7 +31,7 @@ class ApiService {
     final headers = {
       'Content-Type': 'application/json',
       'Authorization': 'Bearer $token',
-      'accept-language' : lang!
+      'accept-language': lang!
     };
 
     String? encodedBody;
@@ -120,7 +124,7 @@ class ApiService {
       final createdUser = User.fromJson(responseData);
       return createdUser;
     } else {
-     throw Exception(response);
+      throw Exception(response);
     }
   }
 
@@ -160,8 +164,9 @@ class ApiService {
   Future<List<Consultation>> getConsultationList(
       {int page = 1, int perPage = 20, int? userId}) async {
     Map<String, dynamic> body = {
-    "expand": "pusherAppKey,parentConsultation,consultations,user,media,pusherChannel,"
-    "chatConfig,chatHistory,voipConfig,videoConfig,recommendation"
+      "expand":
+          "pusherAppKey,parentConsultation,consultations,user,media,pusherChannel,"
+              "chatConfig,chatHistory,voipConfig,videoConfig,recommendation"
     };
     if (userId != null) {
       body["filter[user_id]"] = userId;
@@ -200,8 +205,9 @@ class ApiService {
       "medium": medium.toString().split('.').last,
       "user_id": userID,
       "media_ids": mediaIDs,
-      "expand": "pusherAppKey,parentConsultation,consultations,user,media,pusherChannel,"
-          "chatConfig,chatHistory,voipConfig,videoConfig,recommendation"
+      "expand":
+          "pusherAppKey,parentConsultation,consultations,user,media,pusherChannel,"
+              "chatConfig,chatHistory,voipConfig,videoConfig,recommendation"
     });
 
     if (response.statusCode == 201) {
@@ -220,8 +226,9 @@ class ApiService {
         endpoint: 'consultations/$consultationID',
         method: 'get',
         body: {
-          "expand": "pusherAppKey,parentConsultation,consultations,user,media,pusherChannel,"
-              "chatConfig,chatHistory,voipConfig,videoConfig,recommendation"
+          "expand":
+              "pusherAppKey,parentConsultation,consultations,user,media,pusherChannel,"
+                  "chatConfig,chatHistory,voipConfig,videoConfig,recommendation"
         });
     if (response.statusCode == 200) {
       final responseData = json.decode(response.body);
@@ -239,8 +246,9 @@ class ApiService {
         await callApi(endpoint: 'consultations', method: 'get', body: {
       "per-page": 1,
       "sort": "-id",
-      "expand": "pusherAppKey,parentConsultation,consultations,user,media,pusherChannel,"
-          "chatConfig,chatHistory,voipConfig,videoConfig,recommendation"
+      "expand":
+          "pusherAppKey,parentConsultation,consultations,user,media,pusherChannel,"
+              "chatConfig,chatHistory,voipConfig,videoConfig,recommendation"
     });
     if (response.statusCode == 200) {
       final responseData = json.decode(response.body);
@@ -309,9 +317,65 @@ class ApiService {
         method: "post",
         body: {"score": score});
 
-    if(response.statusCode == 200){
-      return true ;
+    if (response.statusCode == 200) {
+      return true;
     }
-   throw Exception(response);
+    throw Exception(response);
+  }
+
+  Future<PredictSummary> getPredictSummary(int consultationID) async {
+    final response = await callApi(
+        endpoint: 'consultations/$consultationID/predict-summary',
+        method: 'get'
+      );
+    if (response.statusCode == 200) {
+      final responseData = json.decode(response.body);
+      final predictSummary = PredictSummary.fromJson(responseData);
+      return predictSummary;
+    } else {
+      throw Exception(response);
+    }
+  }
+
+  Future<Soap> getSoapSummary(int consultationID) async {
+    final response = await callApi(
+        endpoint: 'consultations/$consultationID/soap-summary',
+        method: 'get'
+    );
+    if (response.statusCode == 200) {
+      final responseData = json.decode(response.body);
+      final soap = Soap.fromJson(responseData);
+      return soap;
+    } else {
+      throw Exception(response);
+    }
+  }
+
+  Future<Transcription> getTranscription(int consultationID) async {
+    final response = await callApi(
+        endpoint: 'consultations/$consultationID/transcription',
+        method: 'get'
+    );
+    if (response.statusCode == 200) {
+      final responseData = json.decode(response.body);
+      final transcription = Transcription.fromJson(responseData);
+      return transcription;
+    } else {
+      throw Exception(response);
+    }
+  }
+
+  Future<List<PredictSpecialty>> getPredictSpecialty(int consultationID) async {
+    final response = await callApi(
+        endpoint: 'consultations/$consultationID/predict-specialty',
+        method: 'get');
+    if (response.statusCode == 200) {
+      final List<dynamic> responseData = json.decode(response.body);
+      final List<PredictSpecialty> predictSpecialty =
+      responseData.map((json) => PredictSpecialty.fromJson(json)).toList();
+      return predictSpecialty;
+    } else {
+      throw Exception(response);
+    }
   }
 }
