@@ -3,11 +3,14 @@ import 'dart:io';
 import 'package:altibbi/enum.dart';
 import 'package:altibbi/service/api_service.dart';
 import 'package:altibbi_example/waiting_room.dart';
+import 'package:csv/csv.dart';
 import 'package:flutter/material.dart';
 import 'package:images_picker/images_picker.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:open_filex/open_filex.dart';
 import 'package:http/http.dart' as http;
+import 'package:path_provider/path_provider.dart';
+
 class Consultation extends StatefulWidget {
   const Consultation({Key? key}) : super(key: key);
 
@@ -168,6 +171,32 @@ class _ConsultationState extends State<Consultation> {
     var rated = await apiService.rateConsultation(226, 4);
     print("consultation rated : $rated");
   }
+
+  Future<void> attachAsCSV(List<Map<String, String>> jsonData) async {
+    try {
+      final directory = await getApplicationDocumentsDirectory();
+      final fileName = 'attach-consultation-${DateTime.now().millisecondsSinceEpoch}.csv';
+      final filePath = '${directory.path}/$fileName';
+
+      List<List<String>> rows = [];
+      if (jsonData.isNotEmpty) {
+        rows.add(jsonData.first.keys.toList());
+        for (var row in jsonData) {
+          rows.add(row.values.toList());
+        }
+      }
+
+      String csvContent = const ListToCsvConverter().convert(rows);
+      final file = File(filePath);
+      await file.writeAsString(csvContent, flush: true);
+      await apiService.uploadMedia(file);
+
+    } catch (e) {
+      print("Failed to attach CSV: $e");
+    }
+  }
+
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(

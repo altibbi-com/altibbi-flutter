@@ -36,3 +36,6 @@
 
 ## 0.0.8
 * rate consultation to be int 
+
+## 0.0.9
+* Adding Altibbi AI Models

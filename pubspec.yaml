@@ -1,6 +1,6 @@
 name: altibbi
 description: Altibbi's Flutter SDK provides real-time, 24/7 connection to certified doctors via a suite of communication channels including GSM, VOIP, chat, and video.
-version: 0.0.8
+version: 0.0.9
 homepage: https://altibbi.com/
 
 environment:
@@ -11,14 +11,14 @@ dependencies:
   flutter:
     sdk: flutter
   plugin_platform_interface:  ^2.1.8
-  sendbird_chat_sdk: ^4.2.10
-  http: ^1.2.1
+  sendbird_chat_sdk: ^4.2.23
+  http: ^1.2.2
   pusher_channels_flutter: ^2.2.1
 
 dev_dependencies:
   flutter_test:
     sdk: flutter
-  flutter_lints: ^2.0.0
+  flutter_lints: ^5.0.0
 
 flutter:
   plugin:

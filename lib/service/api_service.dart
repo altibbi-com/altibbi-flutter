@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:altibbi/altibbi_service.dart';
 import 'package:altibbi/enum.dart';
+import 'package:altibbi/model/Article.dart';
 import 'package:altibbi/model/media.dart';
 import 'package:altibbi/model/consultation.dart';
 import 'package:altibbi/model/predict_specialty.dart';
@@ -49,10 +50,10 @@ class ApiService {
         queryParameters['page'] = page.toString();
       }
 
-      url = Uri.parse('$baseURL/v1/$endpoint')
+      url = Uri.parse(baseURL!.contains("rest-api") ? '$baseURL/v1/$endpoint' : '')
           .replace(queryParameters: queryParameters);
     } else {
-      url = Uri.parse('$baseURL/v1/$endpoint');
+      url = Uri.parse(baseURL!.contains("rest-api") ? '$baseURL/v1/$endpoint' : '');
       if (method == 'post' && body.containsKey('expand')) {
         final expand = body['expand'];
         url = url.replace(queryParameters: {'expand': expand});
@@ -195,12 +196,12 @@ class ApiService {
       required Medium medium,
       required int userID,
       List<String>? mediaIDs,
-      String? followUpId}) async {
+      String? followUpId,
+      String? forceWhiteLabelingPartnerName}) async {
     if (!Medium.values.contains(medium)) {
       throw Exception('Invalid medium value');
     }
-    final response =
-        await callApi(endpoint: 'consultations', method: 'post', body: {
+    final Map<String, dynamic> body = {
       "question": question,
       "medium": medium.toString().split('.').last,
       "user_id": userID,
@@ -208,7 +209,15 @@ class ApiService {
       "expand":
           "pusherAppKey,parentConsultation,consultations,user,media,pusherChannel,"
               "chatConfig,chatHistory,voipConfig,videoConfig,recommendation"
-    });
+    };
+    if (followUpId != null) {
+      body['parent_consultation_id'] = followUpId;
+    }
+    if (forceWhiteLabelingPartnerName != null && forceWhiteLabelingPartnerName.length > 3) {
+      body['question'] = "${body['question']} ~$forceWhiteLabelingPartnerName~";
+    }
+    final response =
+        await callApi(endpoint: 'consultations', method: 'post', body: body);
 
     if (response.statusCode == 201) {
       final responseData = json.decode(response.body);
@@ -376,6 +385,71 @@ class ApiService {
       return predictSpecialty;
     } else {
       throw Exception(response);
+    }
+  }
+
+  /// Retrieves a list of media attachments from the API.
+  ///
+  /// [page] - The page number of the emdia list to retrieve. Defaults to 1.
+  /// [perPage] - The number of media items to retrieve per page. Defaults to 20.
+  ///
+  /// Returns a list of consultation objects if the API call is successful.
+  Future<List<Media>> getMediaList(
+      {int page = 1, int perPage = 20}) async {
+    final response = await callApi(
+        perPage: perPage,
+        page: page,
+        endpoint: 'media',
+        method: 'get');
+
+    if (response.statusCode == 200) {
+      final List<dynamic> responseData = json.decode(response.body);
+      final List<Media> mediaList =
+      responseData.map((json) => Media.fromJson(json)).toList();
+      return mediaList;
+    } else {
+      throw Exception('Error: ${response.body}');
+    }
+  }
+
+  /// Deletes the media with the given [mediaID] from the API.
+  /// Returns true if the API call is successful.
+  Future deleteMedia(int mediaID) async {
+    final response = await callApi(endpoint: 'media/$mediaID', method: 'delete');
+
+    if (response.statusCode == 204) {
+      return true;
+    } else {
+      throw Exception('Error : ${response.body}');
+    }
+  }
+
+  /// Retrieves a list of articles from the API.
+  ///
+  /// [subcategoryIds] - The articles topics to be retrieved.
+  /// [page] - The page number of the article list to retrieve. Defaults to 1.
+  /// [perPage] - The number of articles items to retrieve per page. Defaults to 20.
+  ///
+  /// Returns a list of consultation objects if the API call is successful.
+  Future<List<Article>> getArticlesList(
+      {required List<int> subcategoryIds, int page = 1, int perPage = 20}) async {
+    final response = await callApi(
+        perPage: perPage,
+        page: page,
+        endpoint: 'https://rest-api.altibbi.com/active/v1/articles',
+        body: {
+          'filter[sub_category_id][in]': subcategoryIds,
+          'sort': '-article_id',
+        },
+        method: 'get');
+
+    if (response.statusCode == 200) {
+      final List<dynamic> responseData = json.decode(response.body);
+      final List<Article> articlesList =
+      responseData.map((json) => Article.fromJson(json)).toList();
+      return articlesList;
+    } else {
+      throw Exception('Error: ${response.body}');
     }
   }
 }
