@@ -50,10 +50,10 @@ class ApiService {
         queryParameters['page'] = page.toString();
       }
 
-      url = Uri.parse(baseURL!.contains("rest-api") ? '$baseURL/v1/$endpoint' : '')
+      url = Uri.parse(baseURL!.contains("rest-api") ? baseURL : '$baseURL/v1/$endpoint')
           .replace(queryParameters: queryParameters);
     } else {
-      url = Uri.parse(baseURL!.contains("rest-api") ? '$baseURL/v1/$endpoint' : '');
+      url = Uri.parse(baseURL!.contains("rest-api") ? baseURL : '$baseURL/v1/$endpoint');
       if (method == 'post' && body.containsKey('expand')) {
         final expand = body['expand'];
         url = url.replace(queryParameters: {'expand': expand});
