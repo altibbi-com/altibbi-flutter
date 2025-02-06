@@ -40,3 +40,6 @@
 ## 0.0.9
 ## 0.1.0
 * Adding Altibbi AI Models
+
+## 0.1.1
+* remove mockito dependencies 
