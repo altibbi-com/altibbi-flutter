@@ -43,3 +43,6 @@
 
 ## 0.1.1
 * remove mockito dependencies 
+* 
+## 0.1.2
+* fix create consultation error response 
