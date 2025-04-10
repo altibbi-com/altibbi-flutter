@@ -224,7 +224,7 @@ class ApiService {
       final createdConsultation = Consultation.fromJson(responseData);
       return createdConsultation;
     } else {
-      throw response;
+      throw Exception(response);
     }
   }
 

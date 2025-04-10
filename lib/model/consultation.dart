@@ -85,7 +85,9 @@ class Consultation {
           ?.map((item) => Consultation.fromJson(item as Map<String, dynamic>))
           .toList(),
       pusherChannel: json['pusherChannel'] as String?,
-      doctorAverageRating: json['doctor_average_rating'] as double?,
+      doctorAverageRating: json['doctor_average_rating'] == null
+          ? null
+          : (json['doctor_average_rating'] as num).toDouble(),
       pusherApiKey: json['pusherAppKey'] as String?,
       chatConfig: json['chatConfig'] != null ? ChatConfig.fromJson(
           json['chatConfig'] as Map<String, dynamic>) : null,
