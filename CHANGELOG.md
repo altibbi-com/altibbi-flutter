@@ -48,4 +48,5 @@
 * fix create consultation error response 
 
 ## 0.1.3
+## 0.2.0
 * Altibbi Sina AI Chat Model
