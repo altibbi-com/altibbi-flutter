@@ -467,7 +467,7 @@ class ApiService {
 
   /// Creates a new chat.
   /// Returns the session ID if the API call is successful.
-  Future<Chat> createChat() async {
+  Future<Chat> createSinaSession() async {
     final response =
     await callApi(endpoint: 'chats', method: 'post', isSinaAPI: true);
     if (response.statusCode == 201) {

@@ -26,7 +26,7 @@ class _AsksinaState extends State<Asksina> {
 
   Future<void> _createNewChatSession() async {
     try {
-      final chatSession = await _apiService.createChat();
+      final chatSession = await _apiService.createSinaSession();
       setState(() {
         _chatSessionId = chatSession.id!;
       });
