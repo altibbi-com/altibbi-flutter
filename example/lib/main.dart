@@ -3,13 +3,15 @@ import 'package:altibbi/altibbi_service.dart';
 import 'package:altibbi_example/phr.dart';
 import 'package:flutter/material.dart';
 
+import 'askSina.dart';
 import 'consultation.dart';
 
 void main() {
   AltibbiService.init(
     token: "",
     baseUrl: "",
-    language: 'ar'); // ar or en
+    language: 'ar', // ar or en
+    sinaModelEndPoint: '');
   runApp(const MaterialApp(home: MainWidget(),debugShowCheckedModeBanner: false));
 }
 
@@ -47,6 +49,13 @@ class _MainWidgetState extends State<MainWidget> {
     Navigator.push(
       context,
       MaterialPageRoute(builder: (context) => const PhrPage()),
+    );
+  }
+
+  void openAsksina() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (context) => const Asksina()),
     );
   }
 
@@ -91,6 +100,23 @@ class _MainWidgetState extends State<MainWidget> {
                   onPressed: openPhr,
                   child: const Text(
                     "open phrs page",
+                    style: TextStyle(color: Colors.white, fontSize: 20),
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 20),
+            Flexible(
+              child: Container(
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  color: const Color(0xFF0099D1),
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                child: TextButton(
+                  onPressed: openAsksina,
+                  child: const Text(
+                    "Sina page",
                     style: TextStyle(color: Colors.white, fontSize: 20),
                   ),
                 ),

@@ -6,12 +6,14 @@ import 'package:altibbi/model/media.dart';
 import 'package:altibbi/model/consultation.dart';
 import 'package:altibbi/model/predict_specialty.dart';
 import 'package:altibbi/model/predict_summary.dart';
+import 'package:altibbi/model/sina/chatMessage.dart';
 import 'package:altibbi/model/soap.dart';
 import 'package:altibbi/model/transcription.dart';
 import 'package:altibbi/model/user.dart';
 import 'dart:io';
 import 'package:http/http.dart' as http;
 
+import '../model/sina/chat.dart';
 class ApiService {
   /// Makes an API call with the specified endpoint, method, body, and file (optional).
   /// Returns the HTTP response from the API.
@@ -21,9 +23,10 @@ class ApiService {
       Map<String, dynamic> body = const {},
       File? file,
       int? page,
-      int? perPage}) async {
+      int? perPage,
+      bool? isSinaAPI = false}) async {
     final token = AltibbiService.authToken;
-    final baseURL = AltibbiService.url;
+    final baseURL = isSinaAPI == true ? AltibbiService.sinaModelEndPointUrl : AltibbiService.url;
     final lang = AltibbiService.lang;
     if (token == null) {
       throw Exception('Token is missing or invalid.');
@@ -31,31 +34,39 @@ class ApiService {
 
     final headers = {
       'Content-Type': 'application/json',
-      'Authorization': 'Bearer $token',
+      'Authorization': 'Bearer ${isSinaAPI == true ? "" : token}',
       'accept-language': lang!
     };
 
     String? encodedBody;
-    if (body.isNotEmpty) {
-      encodedBody = json.encode(body);
+
+    Map<String, dynamic> requestBody = Map<String, dynamic>.from(body);
+
+    if (isSinaAPI == true) {
+      requestBody['partner'] = AltibbiService.url;
+      requestBody['partnerUser'] = token;
+    }
+
+    if (requestBody.isNotEmpty) {
+      encodedBody = json.encode(requestBody);
     }
 
     Uri url;
 
     if (method == 'get') {
-      final queryParameters = Map.fromEntries(body.entries
+      final queryParameters = Map.fromEntries(requestBody.entries
           .map((entry) => MapEntry(entry.key, entry.value.toString())));
       if (perPage != null && page != null) {
         queryParameters['per-page'] = perPage.toString();
         queryParameters['page'] = page.toString();
       }
 
-      url = Uri.parse(baseURL!.contains("rest-api") ? baseURL : '$baseURL/v1/$endpoint')
+      url = Uri.parse(baseURL!.contains("rest-api") ? baseURL : (isSinaAPI == true ? '$baseURL/$endpoint' : '$baseURL/v1/$endpoint'))
           .replace(queryParameters: queryParameters);
     } else {
-      url = Uri.parse(baseURL!.contains("rest-api") ? baseURL : '$baseURL/v1/$endpoint');
-      if (method == 'post' && body.containsKey('expand')) {
-        final expand = body['expand'];
+      url = Uri.parse(baseURL!.contains("rest-api") ? baseURL : (isSinaAPI == true ? '$baseURL/$endpoint' : '$baseURL/v1/$endpoint'));
+      if (method == 'post' && requestBody.containsKey('expand')) {
+        final expand = requestBody['expand'];
         url = url.replace(queryParameters: {'expand': expand});
       }
     }
@@ -452,4 +463,68 @@ class ApiService {
       throw Exception('Error: ${response.body}');
     }
   }
+
+
+  /// Creates a new chat.
+  /// Returns the session ID if the API call is successful.
+  Future<Chat> createChat() async {
+    final response =
+    await callApi(endpoint: 'chats', method: 'post', isSinaAPI: true);
+    if (response.statusCode == 201) {
+      final responseData = json.decode(response.body);
+      final createdUser = Chat.fromJson(responseData);
+      return createdUser;
+    } else {
+      throw Exception(response);
+    }
+  }
+
+  /// Creates a new chat.
+  /// Returns the session ID if the API call is successful.
+  Future<ChatResponse> sendSinaMessage(String text, String sessionId) async {
+    final Map<String, dynamic> body = {
+      "text": text,
+    };
+    final response =
+    await callApi(endpoint: 'chats/$sessionId/messages',
+        method: 'post',
+        body: body,
+        isSinaAPI: true);
+
+    if (response.statusCode == 200) {
+      final responseData = json.decode(response.body);
+      final createdUser = ChatResponse.fromJson(responseData);
+      return createdUser;
+    } else {
+      throw Exception(response);
+    }
+  }
+
+  /// gets a list of chats based on sessions Id.
+  /// Returns the chat messages list if the API call is successful.
+  Future<List<ChatMessage>> getSinaChatMessages({
+    required String sessionId,
+    int page = 1,
+    int perPage = 20
+  }) async {
+    final response =
+    await callApi(
+        perPage: perPage,
+        page: page,
+        endpoint: 'chats/$sessionId/messages',
+        method: 'get',
+        isSinaAPI: true);
+
+    if (response.statusCode == 200) {
+      final dynamic responseData = json.decode(response.body);
+      final List<dynamic> rawList = responseData['data'] as List<dynamic>;
+       final List<ChatMessage> chatMessagesList = rawList
+          .map<ChatMessage>((json) => ChatMessage.fromJson(json as Map<String, dynamic>))
+          .toList();
+      return chatMessagesList;
+    } else {
+      throw Exception(response);
+    }
+  }
+
 }
