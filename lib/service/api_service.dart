@@ -43,8 +43,8 @@ class ApiService {
     Map<String, dynamic> requestBody = Map<String, dynamic>.from(body);
 
     if (isSinaAPI == true) {
-      requestBody['partner'] = AltibbiService.url;
-      requestBody['partnerUser'] = token;
+      headers['partner-host'] = AltibbiService.url!;
+      headers['partner-user-token'] = token;
     }
 
     if (requestBody.isNotEmpty) {

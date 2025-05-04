@@ -49,4 +49,5 @@
 
 ## 0.1.3
 ## 0.2.0
+## 0.2.1
 * Altibbi Sina AI Chat Model
