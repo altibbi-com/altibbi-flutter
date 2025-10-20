@@ -19,6 +19,7 @@ class Consultation {
   int? parentConsultationId;
   String? createdAt;
   String? updatedAt;
+  String? acceptedAt;
   User? user;
   Consultation? parentConsultation;
   List<Media>? media;
@@ -43,6 +44,7 @@ class Consultation {
     this.parentConsultationId,
     this.createdAt,
     this.updatedAt,
+    this.acceptedAt,
     this.parentConsultation,
     this.media,
     this.user,
@@ -73,6 +75,7 @@ class Consultation {
       parentConsultationId: json['parent_consultation_id'] as int?,
       createdAt: json['created_at'] as String?,
       updatedAt: json['updated_at'] as String?,
+      acceptedAt: json['accepted_at'] as String?,
       parentConsultation: json['parentConsultation'] != null
           ? Consultation.fromJson(
           json['parentConsultation'] as Map<String, dynamic>)
