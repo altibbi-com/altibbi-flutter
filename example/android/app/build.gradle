@@ -24,7 +24,7 @@ android {
         applicationId = "com.example.test_library"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
-        minSdk = flutter.minSdkVersion
+        minSdk = 23
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
@@ -35,6 +35,8 @@ android {
             // TODO: Add your own signing config for the release build.
             // Signing with the debug keys for now, so `flutter run --release` works.
             signingConfig = signingConfigs.debug
+            minifyEnabled true
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
         }
     }
 }
@@ -48,7 +50,7 @@ dependencies {
     testImplementation 'junit:junit:4.13.2'
     testImplementation 'org.mockito:mockito-core:4.11.0'
     testImplementation 'org.mockito:mockito-inline:4.11.0'
-
+    implementation 'org.slf4j:slf4j-nop:1.7.36'    // or 2.0.13 if your SDKs use SL
 }
 
 tasks.withType(Test).configureEach {
