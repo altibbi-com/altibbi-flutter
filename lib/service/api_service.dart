@@ -208,7 +208,8 @@ class ApiService {
       required int userID,
       List<String>? mediaIDs,
       String? followUpId,
-      String? forceWhiteLabelingPartnerName}) async {
+      String? forceWhiteLabelingPartnerName,
+      int? consultationCategoryId}) async {
     if (!Medium.values.contains(medium)) {
       throw Exception('Invalid medium value');
     }
@@ -226,6 +227,9 @@ class ApiService {
     }
     if (forceWhiteLabelingPartnerName != null && forceWhiteLabelingPartnerName.length > 3) {
       body['question'] = "${body['question']} ~$forceWhiteLabelingPartnerName~";
+    }
+    if (consultationCategoryId != null) {
+      body['consultation_category_id'] = consultationCategoryId;
     }
     final response =
         await callApi(endpoint: 'consultations', method: 'post', body: body);

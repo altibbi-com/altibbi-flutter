@@ -57,3 +57,7 @@
 
 ## 0.2.3
 * Adding Accpted at
+* 
+## 0.2.4
+* Adding Consultation category
+* Adding Lanugage to Sina

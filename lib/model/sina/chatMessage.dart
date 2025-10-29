@@ -28,7 +28,14 @@ class ChatMessage {
   final DateTime createdAt;
   final DateTime updatedAt;
   final dynamic media;
-  final MessageData? data;
+
+  final Map<String, dynamic>? data;
+
+  final String? languageUsed;
+  final List<dynamic>? tags;
+  final String? contentType;
+  final bool? foundInRag;
+  final List<dynamic>? links;
 
   ChatMessage({
     required this.id,
@@ -39,9 +46,17 @@ class ChatMessage {
     required this.updatedAt,
     this.media,
     this.data,
+    this.languageUsed,
+    this.tags,
+    this.contentType,
+    this.foundInRag,
+    this.links,
   });
 
   factory ChatMessage.fromJson(Map<String, dynamic> json) {
+    final Map<String, dynamic>? dataJson =
+    json['data'] is Map<String, dynamic> ? json['data'] as Map<String, dynamic> : null;
+
     return ChatMessage(
       id: json['id'] as int,
       sender: json['sender'] as String,
@@ -49,10 +64,13 @@ class ChatMessage {
       chatId: json['chat_id'] as String,
       createdAt: DateTime.parse(json['created_at'] as String),
       updatedAt: DateTime.parse(json['updated_at'] as String),
-      media: json['media'], // keep dynamic, or cast if you know the type
-      data: json['data'] != null
-          ? MessageData.fromJson(json['data'] as Map<String, dynamic>)
-          : null,
+      media: json['media'],
+      data: dataJson == null ? null : Map<String, dynamic>.from(dataJson),
+      languageUsed: dataJson?['language_used'] as String?,
+      tags: (dataJson?['tags'] as List?)?.cast<dynamic>(),
+      contentType: dataJson?['content_type'] as String?,
+      foundInRag: dataJson?['found_in_rag'] as bool?,
+      links: (dataJson?['links'] as List?)?.cast<dynamic>(),
     );
   }
 
@@ -66,35 +84,26 @@ class ChatMessage {
       'updated_at': updatedAt.toIso8601String(),
       'media': media,
     };
-    if (data != null) {
-      result['data'] = data!.toJson();
+
+    Map<String, dynamic>? dataMap = data == null ? null : Map<String, dynamic>.from(data!);
+
+    void put(String key, dynamic value) {
+      if (value != null) {
+        dataMap ??= <String, dynamic>{};
+        dataMap![key] = value;
+      }
     }
+
+    put('language_used', languageUsed);
+    put('tags', tags);
+    put('content_type', contentType);
+    put('found_in_rag', foundInRag);
+    put('links', links);
+
+    if (dataMap != null) {
+      result['data'] = dataMap;
+    }
+
     return result;
   }
-}
-
-class MessageData {
-  final String contentType;
-  final bool foundInRag;
-  final List<dynamic> links;
-
-  MessageData({
-    required this.contentType,
-    required this.foundInRag,
-    required this.links,
-  });
-
-  factory MessageData.fromJson(Map<String, dynamic> json) {
-    return MessageData(
-      contentType: json['content_type'] as String,
-      foundInRag: json['found_in_rag'] as bool,
-      links: json['links'] as List<dynamic>,
-    );
-  }
-
-  Map<String, dynamic> toJson() => {
-    'content_type': contentType,
-    'found_in_rag': foundInRag,
-    'links': links,
-  };
 }
