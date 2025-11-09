@@ -45,13 +45,6 @@ android {
         minSdkVersion 23
     }
 
-    buildTypes {
-        release {
-            minifyEnabled true
-            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
-        }
-    }
-
     dependencies {
         implementation 'com.opentok.android:opentok-android-sdk:2.24.2'
         implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
