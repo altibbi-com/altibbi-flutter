@@ -70,18 +70,29 @@ class _VideoPageState extends State<VideoPage> with WidgetsBindingObserver {
       }
     };
     WidgetsBinding.instance.addPostFrameCallback((timeStamp) async {
+      final cameraStatus = await Permission.camera.status;
+      final microphoneStatus = await Permission.microphone.status;
+
+      if (cameraStatus.isGranted && microphoneStatus.isGranted) {
+        _controller?.initSession(_config);
+        return;
+      }
       Map<Permission, PermissionStatus> statuses = await [
         Permission.camera,
         Permission.microphone,
       ].request();
+      final finalCameraStatus = await Permission.camera.status;
+      final finalMicrophoneStatus = await Permission.microphone.status;
+
       final isGranted =
-          statuses[Permission.camera] == PermissionStatus.granted &&
-              statuses[Permission.microphone] == PermissionStatus.granted;
+          finalCameraStatus.isGranted && finalMicrophoneStatus.isGranted;
+
       if (isGranted) {
         _controller?.initSession(_config);
       } else {
         debugPrint(
             "Camera or Microphone permission or both denied by the user!");
+        debugPrint("Camera status: $finalCameraStatus, Microphone status: $finalMicrophoneStatus");
       }
     });
   }

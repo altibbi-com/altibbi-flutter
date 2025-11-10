@@ -34,7 +34,6 @@ class ApiService {
 
     final headers = {
       'Content-Type': 'application/json',
-      'Authorization': 'Bearer ${isSinaAPI == true ? "" : token}',
       'accept-language': lang!
     };
 
@@ -45,6 +44,8 @@ class ApiService {
     if (isSinaAPI == true) {
       headers['partner-host'] = AltibbiService.url!;
       headers['partner-user-token'] = token;
+    } else {
+      headers['Authorization'] = 'Bearer ${token}';
     }
 
     if (requestBody.isNotEmpty) {
@@ -485,10 +486,13 @@ class ApiService {
 
   /// Creates a new chat.
   /// Returns the session ID if the API call is successful.
-  Future<ChatResponse> sendSinaMessage(String text, String sessionId) async {
+  Future<ChatResponse> sendSinaMessage(String text, String sessionId, String? mediaId) async {
     final Map<String, dynamic> body = {
       "text": text,
     };
+    if (mediaId != null) {
+      body['media_id'] = mediaId;
+    }
     final response =
     await callApi(endpoint: 'chats/$sessionId/messages',
         method: 'post',
@@ -526,6 +530,20 @@ class ApiService {
           .map<ChatMessage>((json) => ChatMessage.fromJson(json as Map<String, dynamic>))
           .toList();
       return chatMessagesList;
+    } else {
+      throw Exception(response);
+    }
+  }
+
+
+  /// Uploads Sina media [file] to the API.
+  /// Returns the uploaded media object if the API call is successful.
+  Future<Media> uploadSinaMedia(File file) async {
+    var response = await callApi(endpoint: 'media', method: 'post', file: file,isSinaAPI: true);
+    if (response.statusCode == 201) {
+      final responseData = json.decode(response.body);
+      final media = Media.fromJson(responseData);
+      return media;
     } else {
       throw Exception(response);
     }

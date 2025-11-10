@@ -4,7 +4,7 @@ import 'package:flutter/cupertino.dart';
 import 'dart:io';
 import 'package:altibbi/altibbi_chat.dart';
 import 'package:flutter/material.dart';
-import 'package:images_picker/images_picker.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:permission_handler/permission_handler.dart';
 
 
@@ -132,32 +132,22 @@ class _ChatScreenState extends State<ChatScreen> {
   String? path;
 
   Future<void> _selectImage() async {
-    Map<Permission, PermissionStatus> statuses = await [
-      Permission.storage,
-      Permission.photos,
-      Permission.mediaLibrary
-    ].request();
-    final isGranted =
-        statuses[Permission.storage] == PermissionStatus.granted &&
-            statuses[Permission.mediaLibrary] == PermissionStatus.granted;
-    if (isGranted) {
-      List<Media>? res = await ImagesPicker.pick(
-        count: 1,
-        pickType: PickType.all,
-        language: Language.System,
-        maxTime: 30,
-        cropOpt: CropOption(
-          cropType: CropType.circle,
-        ),
-      );
-      if (res != null) {
-        setState(() {
-          path = res[0].path;
-        });
-        if (path != null) {
-          var media = await ApiService().uploadMedia(File(path!));
-          _sendMessage(media.url.toString());
-        }
+    final cameraStatus = await Permission.camera.status;
+    if (!cameraStatus.isGranted) {
+      final status = await Permission.camera.request();
+      if (!status.isGranted) return;
+    }
+
+    final ImagePicker picker = ImagePicker();
+    final XFile? image = await picker.pickImage(source: ImageSource.camera);
+
+    if (image != null) {
+      setState(() {
+        path = image.path;
+      });
+      if (path != null) {
+        var media = await ApiService().uploadMedia(File(path!));
+        _sendMessage(media.url.toString());
       }
     }
   }
@@ -245,7 +235,7 @@ class _ChatScreenState extends State<ChatScreen> {
                   child: const Text('Send'),
                 ),
                 IconButton(
-                  icon: const Icon(Icons.photo_library),
+                  icon: const Icon(Icons.camera_alt),
                   onPressed: _selectImage,
                 ),
               ],

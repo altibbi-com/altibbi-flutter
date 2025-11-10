@@ -5,7 +5,8 @@ import 'package:altibbi/service/api_service.dart';
 import 'package:altibbi_example/waiting_room.dart';
 import 'package:csv/csv.dart';
 import 'package:flutter/material.dart';
-import 'package:images_picker/images_picker.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:open_filex/open_filex.dart';
 import 'package:http/http.dart' as http;
@@ -35,32 +36,65 @@ class _ConsultationState extends State<Consultation> {
   String? path;
 
   Future<void> _selectImage() async {
-    Map<Permission, PermissionStatus> statuses = await [
-      Permission.storage,
-      Permission.photos,
-      Permission.mediaLibrary,
-    ].request();
-    final isGranted =
-        statuses[Permission.storage] == PermissionStatus.granted &&
-            statuses[Permission.mediaLibrary] == PermissionStatus.granted;
-    if (isGranted) {
-      List<Media>? res = await ImagesPicker.pick(
-        count: 1,
-        pickType: PickType.all,
-        language: Language.System,
-        maxTime: 30,
-        cropOpt: CropOption(
-          cropType: CropType.circle,
+    final ImageSource? source = await showDialog<ImageSource>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Select Image Source'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.camera_alt),
+              title: const Text('Camera'),
+              onTap: () => Navigator.pop(context, ImageSource.camera),
+            ),
+            ListTile(
+              leading: const Icon(Icons.photo_library),
+              title: const Text('Gallery'),
+              onTap: () => Navigator.pop(context, ImageSource.gallery),
+            ),
+          ],
         ),
+      ),
+    );
+
+    if (source == null) return;
+
+    if (source == ImageSource.camera) {
+      final cameraStatus = await Permission.camera.status;
+      if (!cameraStatus.isGranted) {
+        final status = await Permission.camera.request();
+        if (!status.isGranted) return;
+      }
+    }
+
+    final ImagePicker picker = ImagePicker();
+    final XFile? image = await picker.pickImage(source: source);
+
+    if (image != null) {
+      setState(() {
+        path = image.path;
+      });
+    }
+  }
+
+  Future<void> _selectDocument() async {
+    try {
+      FilePickerResult? result = await FilePicker.platform.pickFiles(
+        type: FileType.any,
+        allowMultiple: false,
       );
-      if (res != null) {
+
+      if (result != null && result.files.single.path != null) {
+        final filePath = result.files.single.path!;
         setState(() {
-          path = res[0].path;
+          path = filePath;
         });
       }
-    } else {
-      debugPrint(
-          "Camera or Microphone permission or both denied by the user!");
+    } catch (e) {
+      setState(() {
+        errorEmptyBody = "Error picking document: $e";
+      });
     }
   }
 
@@ -243,8 +277,15 @@ class _ConsultationState extends State<Consultation> {
                     ),
                     const SizedBox(width: 10),
                     IconButton(
-                      icon: const Icon(Icons.photo_library),
+                      icon: const Icon(Icons.camera_alt),
                       onPressed: _selectImage,
+                      tooltip: 'Pick Image',
+                    ),
+                    const SizedBox(width: 10),
+                    IconButton(
+                      icon: const Icon(Icons.insert_drive_file),
+                      onPressed: _selectDocument,
+                      tooltip: 'Pick Document',
                     ),
                     const SizedBox(width: 10),
                     Flexible(
