@@ -64,3 +64,6 @@
 * Adding Lanugage to
 ## 0.2.6
 * Adding Sina attachment functionality 
+
+## 0.2.7
+* Adding Logs functionality and Errors tracking 

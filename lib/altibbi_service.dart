@@ -4,6 +4,7 @@ class AltibbiService {
   static String? url; // Base URL for the service
   static String? lang; // lang preference (ar or en)
   static String? sinaModelEndPointUrl; // Sina Model End Point
+  static bool enableLogging = false;
 
   /// Initializes the Altibbi service with the specified parameters.
   ///

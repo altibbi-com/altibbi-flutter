@@ -12,11 +12,136 @@ import 'package:altibbi/model/transcription.dart';
 import 'package:altibbi/model/user.dart';
 import 'dart:io';
 import 'package:http/http.dart' as http;
+import 'package:flutter/foundation.dart' show debugPrint;
 
 import '../model/sina/chat.dart';
+
+class HttpResponseException extends http.Response implements Exception {
+  final String? errorMessage;
+
+  HttpResponseException._(
+    String body,
+    int statusCode, {
+    Map<String, String>? headers,
+    bool isRedirect = false,
+    bool persistentConnection = true,
+    String? reasonPhrase,
+    http.BaseRequest? request,
+    this.errorMessage,
+  }) : super(
+          body,
+          statusCode,
+          headers: headers ?? <String, String>{},
+          isRedirect: isRedirect,
+          persistentConnection: persistentConnection,
+          reasonPhrase: reasonPhrase,
+          request: request,
+        );
+
+  factory HttpResponseException.fromResponse(
+    http.Response response, {
+    String? errorMessage,
+  }) {
+    return HttpResponseException._(
+      response.body,
+      response.statusCode,
+      headers: response.headers,
+      isRedirect: response.isRedirect,
+      persistentConnection: response.persistentConnection,
+      reasonPhrase: response.reasonPhrase,
+      request: response.request,
+      errorMessage: errorMessage,
+    );
+  }
+
+  @override
+  String toString() => errorMessage ?? super.toString();
+}
+
 class ApiService {
-  /// Makes an API call with the specified endpoint, method, body, and file (optional).
-  /// Returns the HTTP response from the API.
+  void _log(String message) {
+    if (AltibbiService.enableLogging) {
+      debugPrint(message);
+    }
+  }
+  String _extractErrorMessage(http.Response response) {
+    try {
+      if (response.body.isEmpty) {
+        return 'API request failed with status ${response.statusCode}: ${response.reasonPhrase ?? 'Unknown error'}';
+      }
+
+      final responseData = json.decode(response.body);
+
+      if (responseData is Map<String, dynamic>) {
+        if (responseData.containsKey('message')) {
+          return responseData['message'].toString();
+        }
+        if (responseData.containsKey('error')) {
+          final error = responseData['error'];
+          if (error is Map) {
+            if (error.containsKey('message')) {
+              return error['message'].toString();
+            }
+            return error.toString();
+          }
+          return error.toString();
+        }
+        if (responseData.containsKey('errors')) {
+          final errors = responseData['errors'];
+          if (errors is List && errors.isNotEmpty) {
+            return errors.join(', ');
+          }
+          if (errors is Map) {
+            return errors.entries.map((e) => '${e.key}: ${e.value}').join(', ');
+          }
+          return errors.toString();
+        }
+      }
+
+      return 'API request failed with status ${response.statusCode}: ${response.body}';
+    } catch (e) {
+      return 'API request failed with status ${response.statusCode}: ${response.body.isNotEmpty ? response.body : (response.reasonPhrase ?? 'Unknown error')}';
+    }
+  }
+
+  Never _throwApiError(http.Response response) {
+    final message = _extractErrorMessage(response);
+    throw HttpResponseException.fromResponse(
+      response,
+      errorMessage: message,
+    );
+  }
+
+  String _generateCurlCommand({
+    required String method,
+    required Uri url,
+    required Map<String, String> headers,
+    String? body,
+    File? file,
+  }) {
+    final methodUpper = method.toUpperCase();
+    final buffer = StringBuffer('curl -X $methodUpper');
+
+    buffer.write(' \'$url\'');
+
+    headers.forEach((key, value) {
+      if (file != null && key.toLowerCase() == 'content-type') {
+        return; // Skip Content-Type for multipart uploads
+      }
+      final escapedValue = value.replaceAll("'", "'\\''");
+      buffer.write(' -H \'$key: $escapedValue\'');
+    });
+
+    if (file != null) {
+      buffer.write(' -F \'file=@${file.path}\'');
+    } else if (body != null && body.isNotEmpty && methodUpper != 'GET') {
+      final escapedBody = body.replaceAll("'", "'\\''");
+      buffer.write(' -d \'$escapedBody\'');
+    }
+
+    return buffer.toString();
+  }
+
   Future<http.Response> callApi(
       {required String? endpoint,
       required String? method,
@@ -33,7 +158,7 @@ class ApiService {
     }
 
     final headers = {
-      'Content-Type': 'application/json',
+      'Content-Type': 'application/json; charset=utf-8',
       'accept-language': lang!
     };
 
@@ -50,6 +175,9 @@ class ApiService {
 
     if (requestBody.isNotEmpty) {
       encodedBody = json.encode(requestBody);
+      _log('\n========== REQUEST BODY ==========');
+      _log(encodedBody);
+      _log('==================================\n');
     }
 
     Uri url;
@@ -71,26 +199,60 @@ class ApiService {
         url = url.replace(queryParameters: {'expand': expand});
       }
     }
+    // Generate and print curl command
+    final curlCommand = _generateCurlCommand(
+      method: method!,
+      url: url,
+      headers: headers,
+      body: encodedBody,
+      file: file,
+    );
+    _log('\n========== CURL COMMAND ==========');
+    final maxChunkSize = 800;
+    if (curlCommand.length <= maxChunkSize) {
+      _log(curlCommand);
+    } else {
+      for (int i = 0; i < curlCommand.length; i += maxChunkSize) {
+        final end = (i + maxChunkSize < curlCommand.length) ? i + maxChunkSize : curlCommand.length;
+        _log(curlCommand.substring(i, end));
+      }
+    }
+    _log('==================================\n');
+
+    http.Response response;
+
     if (file != null) {
       var request = http.MultipartRequest('POST', url);
       request.headers.addAll(headers);
       request.files.add(await http.MultipartFile.fromPath('file', file.path));
       var streamedResponse = await request.send();
-      return await http.Response.fromStream(streamedResponse);
-    }
-
+      response = await http.Response.fromStream(streamedResponse);
+    } else {
     switch (method) {
       case 'get':
-        return await http.get(url, headers: headers);
+          response = await http.get(url, headers: headers);
+          break;
       case 'post':
-        return await http.post(url, headers: headers, body: encodedBody);
+          response = await http.post(url, headers: headers, body: encodedBody);
+          break;
       case 'put':
-        return await http.put(url, headers: headers, body: encodedBody);
+          response = await http.put(url, headers: headers, body: encodedBody);
+          break;
       case 'delete':
-        return await http.delete(url, headers: headers, body: encodedBody);
+          response = await http.delete(url, headers: headers, body: encodedBody);
+          break;
       default:
         throw Exception('Invalid method type: $method');
     }
+    }
+
+    _log('\n========== RESPONSE ==========');
+    _log('Status Code: ${response.statusCode}');
+    _log('Headers: ${response.headers}');
+    _log('Body: ${response.body}');
+    _log('==============================\n');
+
+    return response;
   }
 
   /// Retrieves a user with the given [userID] from the API.
@@ -102,7 +264,7 @@ class ApiService {
       final user = User.fromJson(responseData);
       return user;
     } else {
-      throw Exception(response);
+      _throwApiError(response);
     }
   }
 
@@ -122,7 +284,7 @@ class ApiService {
           responseData.map((json) => User.fromJson(json)).toList();
       return users;
     } else {
-      throw Exception(response);
+      _throwApiError(response);
     }
   }
 
@@ -137,7 +299,7 @@ class ApiService {
       final createdUser = User.fromJson(responseData);
       return createdUser;
     } else {
-      throw Exception(response);
+      _throwApiError(response);
     }
   }
 
@@ -152,7 +314,7 @@ class ApiService {
       final updatedUser = User.fromJson(responseData);
       return updatedUser;
     } else {
-      throw Exception(response);
+      _throwApiError(response);
     }
   }
 
@@ -164,7 +326,7 @@ class ApiService {
     if (response.statusCode == 204) {
       return true;
     } else {
-      throw Exception(response);
+      _throwApiError(response);
     }
   }
 
@@ -175,7 +337,7 @@ class ApiService {
   ///
   /// Returns a list of consultation objects if the API call is successful.
   Future<List<Consultation>> getConsultationList(
-      {int page = 1, int perPage = 20, int? userId}) async {
+      {int page = 1, int perPage = 20, int? userId, String? sort}) async {
     Map<String, dynamic> body = {
       "expand":
           "pusherAppKey,parentConsultation,consultations,user,media,pusherChannel,"
@@ -183,6 +345,9 @@ class ApiService {
     };
     if (userId != null) {
       body["filter[user_id]"] = userId;
+    }
+    if (sort != null) {
+      body["sort"] = sort;
     }
     final response = await callApi(
         perPage: perPage,
@@ -197,7 +362,7 @@ class ApiService {
           responseData.map((json) => Consultation.fromJson(json)).toList();
       return consultations;
     } else {
-      throw Exception(response);
+      _throwApiError(response);
     }
   }
 
@@ -240,7 +405,7 @@ class ApiService {
       final createdConsultation = Consultation.fromJson(responseData);
       return createdConsultation;
     } else {
-      throw Exception(response);
+      _throwApiError(response);
     }
   }
 
@@ -260,7 +425,7 @@ class ApiService {
       final consultation = Consultation.fromJson(responseData);
       return consultation;
     } else {
-      throw Exception(response);
+      _throwApiError(response);
     }
   }
 
@@ -280,7 +445,7 @@ class ApiService {
       final consultation = Consultation.fromJson(responseData[0]);
       return consultation;
     } else {
-      throw Exception(response);
+      _throwApiError(response);
     }
   }
 
@@ -293,7 +458,7 @@ class ApiService {
     if (response.statusCode == 204) {
       return true;
     } else {
-      throw Exception(response);
+      _throwApiError(response);
     }
   }
 
@@ -306,7 +471,7 @@ class ApiService {
     if (response.statusCode == 200) {
       return true;
     } else {
-      throw Exception(response);
+      _throwApiError(response);
     }
   }
 
@@ -319,7 +484,7 @@ class ApiService {
       final media = Media.fromJson(responseData);
       return media;
     } else {
-      throw Exception(response);
+      _throwApiError(response);
     }
   }
 
@@ -332,7 +497,7 @@ class ApiService {
       final file = await File(savePath).writeAsBytes(response.bodyBytes);
       return file.path;
     } else {
-      throw Exception(response);
+      _throwApiError(response);
     }
   }
 
@@ -345,7 +510,7 @@ class ApiService {
     if (response.statusCode == 200) {
       return true;
     }
-    throw Exception(response);
+    _throwApiError(response);
   }
 
   Future<PredictSummary> getPredictSummary(int consultationID) async {
@@ -358,7 +523,7 @@ class ApiService {
       final predictSummary = PredictSummary.fromJson(responseData);
       return predictSummary;
     } else {
-      throw Exception(response);
+      _throwApiError(response);
     }
   }
 
@@ -372,7 +537,7 @@ class ApiService {
       final soap = Soap.fromJson(responseData);
       return soap;
     } else {
-      throw Exception(response);
+      _throwApiError(response);
     }
   }
 
@@ -386,7 +551,7 @@ class ApiService {
       final transcription = Transcription.fromJson(responseData);
       return transcription;
     } else {
-      throw Exception(response);
+      _throwApiError(response);
     }
   }
 
@@ -400,7 +565,7 @@ class ApiService {
       responseData.map((json) => PredictSpecialty.fromJson(json)).toList();
       return predictSpecialty;
     } else {
-      throw Exception(response);
+      _throwApiError(response);
     }
   }
 
@@ -424,7 +589,7 @@ class ApiService {
       responseData.map((json) => Media.fromJson(json)).toList();
       return mediaList;
     } else {
-      throw Exception('Error: ${response.body}');
+      _throwApiError(response);
     }
   }
 
@@ -436,7 +601,7 @@ class ApiService {
     if (response.statusCode == 204) {
       return true;
     } else {
-      throw Exception('Error : ${response.body}');
+      _throwApiError(response);
     }
   }
 
@@ -465,7 +630,7 @@ class ApiService {
       responseData.map((json) => Article.fromJson(json)).toList();
       return articlesList;
     } else {
-      throw Exception('Error: ${response.body}');
+      _throwApiError(response);
     }
   }
 
@@ -480,7 +645,7 @@ class ApiService {
       final createdUser = Chat.fromJson(responseData);
       return createdUser;
     } else {
-      throw Exception(response);
+      _throwApiError(response);
     }
   }
 
@@ -504,7 +669,7 @@ class ApiService {
       final createdUser = ChatResponse.fromJson(responseData);
       return createdUser;
     } else {
-      throw Exception(response);
+      _throwApiError(response);
     }
   }
 
@@ -531,7 +696,7 @@ class ApiService {
           .toList();
       return chatMessagesList;
     } else {
-      throw Exception(response);
+      _throwApiError(response);
     }
   }
 
@@ -545,7 +710,7 @@ class ApiService {
       final media = Media.fromJson(responseData);
       return media;
     } else {
-      throw Exception(response);
+      _throwApiError(response);
     }
   }
 
