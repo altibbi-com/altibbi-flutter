@@ -1,3 +1,23 @@
+buildscript {
+    repositories {
+        google()
+        mavenCentral()
+        def dexprotectorDir = file("${rootDir}/dexprotector")
+        if (dexprotectorDir.exists()) {
+            flatDir {
+                dirs dexprotectorDir.absolutePath
+            }
+        }
+    }
+    dependencies {
+        def dexprotectorDir = file("${rootDir}/dexprotector")
+        if (dexprotectorDir.exists() && dexprotectorDir.listFiles()?.any { it.name.contains("dexprotector") }) {
+            classpath ':dexprotector-gradle-plugin:'
+            classpath ':dexprotector:'
+        }
+    }
+}
+
 allprojects {
     repositories {
         google()

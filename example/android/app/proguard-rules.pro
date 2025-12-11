@@ -1,26 +1,3 @@
-# Add project specific ProGuard rules here.
-# You can control the set of applied configuration files using the
-# proguardFiles setting in build.gradle.
-#
-# For more details, see
-#   http://developer.android.com/guide/developing/tools/proguard.html
-
-# If your project uses WebView with JS, uncomment the following
-# and specify the fully qualified class name to the JavaScript interface
-# class:
-#-keepclassmembers class fqcn.of.javascript.interface.for.webview {
-#   public *;
-#}
-
-# Uncomment this to preserve the line number information for
-# debugging stack traces.
-#-keepattributes SourceFile,LineNumberTable
-
-# If you keep the line number information, uncomment this to
-# hide the original source file name.
-#-renamesourcefileattribute SourceFile
-
-# Flutter specific rules
 -keep class io.flutter.app.** { *; }
 -keep class io.flutter.plugin.**  { *; }
 -keep class io.flutter.util.**  { *; }
@@ -28,28 +5,23 @@
 -keep class io.flutter.**  { *; }
 -keep class io.flutter.plugins.**  { *; }
 
-# Keep Flutter native methods
 -keepclassmembers class io.flutter.** {
     native <methods>;
 }
 
-# Keep Flutter plugin classes
 -keep class * extends io.flutter.plugin.common.MethodCallHandler { *; }
 -keep class * extends io.flutter.plugin.common.EventChannel$StreamHandler { *; }
 -keep class * extends io.flutter.plugin.common.BasicMessageChannel$MessageHandler { *; }
 
-# Keep Gson classes (if used)
 -keepattributes Signature
 -keepattributes *Annotation*
 -keep class sun.misc.Unsafe { *; }
 -keep class com.google.gson.** { *; }
 
-# Keep JSON serialization classes
 -keepclassmembers,allowshrinking,allowobfuscation class * {
     @com.google.gson.annotations.SerializedName <fields>;
 }
 
-# Keep Retrofit classes (if used)
 -keep class retrofit2.** { *; }
 -keepattributes Signature, InnerClasses, EnclosingMethod
 -keepattributes RuntimeVisibleAnnotations, RuntimeVisibleParameterAnnotations
@@ -62,33 +34,27 @@
 -dontwarn retrofit2.KotlinExtensions
 -dontwarn retrofit2.KotlinExtensions$*
 
-# Keep OkHttp classes
 -keep class okhttp3.** { *; }
 -keep interface okhttp3.** { *; }
 -dontwarn okhttp3.**
 -dontwarn okio.**
 
-# Keep WebSocket classes
 -keep class com.pusher.** { *; }
 -keep class com.pusher.java_websocket.** { *; }
 
-# Keep Pusher classes
 -keep class com.pusher.client.** { *; }
 -keep class com.pusher.client.channel.** { *; }
 -keep class com.pusher.client.connection.** { *; }
 -keep class com.pusher.client.util.** { *; }
 
-# Keep reflection-based classes
 -keepclassmembers class * {
     @com.google.gson.annotations.SerializedName <fields>;
 }
 
-# Keep Parcelable classes
 -keep class * implements android.os.Parcelable {
     public static final android.os.Parcelable$Creator *;
 }
 
-# Keep Serializable classes
 -keepclassmembers class * implements java.io.Serializable {
     static final long serialVersionUID;
     private static final java.io.ObjectStreamField[] serialPersistentFields;
@@ -98,24 +64,20 @@
     java.lang.Object readResolve();
 }
 
-# Keep native methods
 -keepclasseswithmembernames class * {
     native <methods>;
 }
 
-# Keep enum classes
 -keepclassmembers enum * {
     public static **[] values();
     public static ** valueOf(java.lang.String);
 }
 
-# Keep R classes
 -keep class **.R
 -keep class **.R$* {
     <fields>;
 }
 
-# Keep custom view constructors
 -keepclasseswithmembers class * {
     public <init>(android.content.Context, android.util.AttributeSet);
 }
@@ -123,17 +85,21 @@
     public <init>(android.content.Context, android.util.AttributeSet, int);
 }
 
-# Keep crash reporting classes
 -keep class com.google.firebase.crashlytics.** { *; }
 -keep class com.google.firebase.analytics.** { *; }
 
-# Keep annotation classes
 -keepattributes *Annotation*
 -keepattributes Signature
 -keepattributes InnerClasses
 -keepattributes EnclosingMethod
 
-# Remove logging in release builds
+# Security: Aggressive obfuscation settings
+-optimizationpasses 5
+-overloadaggressively
+-repackageclasses ''
+-allowaccessmodification
+
+# Security: Remove all logging in release builds
 -assumenosideeffects class android.util.Log {
     public static boolean isLoggable(java.lang.String, int);
     public static int v(...);
@@ -143,35 +109,52 @@
     public static int e(...);
 }
 
-# Keep line numbers for debugging
+# Security: Keep minimal attributes for crash reporting
 -keepattributes SourceFile,LineNumberTable
 
-# Handle missing Google Play Core classes
 -dontwarn com.google.android.play.core.**
 -keep class com.google.android.play.core.** { *; }
 
-# Handle missing classes gracefully
 -dontwarn com.google.android.play.core.splitcompat.SplitCompatApplication
 -dontwarn com.google.android.play.core.splitinstall.**
 -dontwarn com.google.android.play.core.tasks.**
 
-# Keep Flutter deferred components
 -keep class io.flutter.embedding.engine.deferredcomponents.** { *; }
 -keep class io.flutter.app.FlutterPlayStoreSplitApplication { *; }
 
-# Keep generic signature of Call, Response (R8 full mode strips signatures from non-kept items).
 -keep,allowobfuscation,allowshrinking interface retrofit2.Call
 -keep,allowobfuscation,allowshrinking class retrofit2.Response
 
-# With R8 full mode, generic signatures are stripped for classes that are not
-# kept. Suspend functions are wrapped in continuations where the type argument
-# is used.
 -keep,allowobfuscation,allowshrinking class kotlin.coroutines.Continuation
 
+# OpenTok API classes
+-keep class com.opentok.android.** { *; }
+-keep class com.opentok.impl.** { *; }
 
+# OpenTok inner classes - Required to prevent ClassNotFoundException
+-keep class com.opentok.android.SubscriberKit { *; }
+-keep class com.opentok.android.SubscriberKit$SubscriberAudioStats { *; }
+-keep class com.opentok.android.SubscriberKit$SubscriberVideoStats { *; }
+-keep class com.opentok.android.PublisherKit { *; }
+-keep class com.opentok.android.PublisherKit$PublisherAudioStats { *; }
+-keep class com.opentok.android.PublisherKit$PublisherVideoStats { *; }
+-keep class com.opentok.android.Session$** { *; }
+-keep class com.opentok.android.Publisher$** { *; }
+-keep class com.opentok.android.Subscriber$** { *; }
 
-# Keep OpenTok classes to prevent crashes
--keep class com.opentok.** { *; }
+-keepclassmembers class com.opentok.android.** {
+    native <methods>;
+}
+
+-keepclassmembers enum com.opentok.android.** {
+    public static **[] values();
+    public static ** valueOf(java.lang.String);
+}
+
+-keep interface com.opentok.android.** { *; }
+
+-keep class com.vonage.webrtc.** { *; }
+-keep class com.vonage.webrtc.voiceengine.** { *; }
 -keep class com.vonage.** { *; }
--keeppackagenames com.opentok.**
--keeppackagenames com.vonage.**
+
+-keepattributes InnerClasses,EnclosingMethod

@@ -5,6 +5,15 @@ plugins {
     id "dev.flutter.flutter-gradle-plugin"
 }
 
+def dexprotectorDir = file("${rootProject.projectDir}/dexprotector")
+def hasDexProtector = dexprotectorDir.exists() && dexprotectorDir.listFiles()?.any {
+    it.name.contains("dexprotector") && it.name.endsWith(".jar")
+}
+
+if (hasDexProtector) {
+    apply plugin: 'dexprotector'
+}
+
 android {
     namespace = "com.example.test_library"
     compileSdk = flutter.compileSdkVersion
@@ -20,10 +29,7 @@ android {
     }
 
     defaultConfig {
-        // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
         applicationId = "com.example.test_library"
-        // You can update the following values to match your application needs.
-        // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = 23
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
@@ -32,11 +38,19 @@ android {
 
     buildTypes {
         release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
             signingConfig = signingConfigs.debug
+
             minifyEnabled true
+            shrinkResources true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+
+            debuggable false
+            renderscriptDebuggable false
+
+            def dexprotectorConfig = file("${projectDir}/dexprotector-config.xml")
+            if (dexprotectorConfig.exists()) {
+                ext.set("dexprotector.configFile", dexprotectorConfig.absolutePath)
+            }
         }
     }
 }
@@ -50,15 +64,15 @@ dependencies {
     testImplementation 'junit:junit:4.13.2'
     testImplementation 'org.mockito:mockito-core:4.11.0'
     testImplementation 'org.mockito:mockito-inline:4.11.0'
-    implementation 'org.slf4j:slf4j-nop:1.7.36'    // or 2.0.13 if your SDKs use SL
+    implementation 'org.slf4j:slf4j-nop:1.7.36'
 }
 
 tasks.withType(Test).configureEach {
-    ignoreFailures = false // Ensures tests fail explicitly
+    ignoreFailures = false
     testLogging {
         events "passed", "skipped", "failed"
     }
-    outputs.upToDateWhen { false } // Forces Gradle to run tests even if nothing changes
+    outputs.upToDateWhen { false }
 }
 tasks.named("check") {
     dependsOn("testDebugUnitTest")

@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<config>
+    <!-- Security: Runtime protection -->
+    <setting name="antiDebug" value="true"/>
+    <setting name="antiEmulator" value="true"/>
+    <setting name="antiHook" value="true"/>
+    <setting name="antiTamper" value="true"/>
+    <setting name="antiRoot" value="true"/>
+    <setting name="antiVM" value="true"/>
+
+    <!-- Security: Encryption -->
+    <setting name="stringEncryption" value="true"/>
+    <setting name="classEncryption" value="true"/>
+    <setting name="resourceEncryption" value="true"/>
+    <setting name="controlFlowObfuscation" value="true"/>
+
+    <!-- Security: Additional protection -->
+    <setting name="removeDebugInfo" value="true"/>
+    <setting name="checkIntegrity" value="true"/>
+    <keep>
+        <class name="io.flutter.**"/>
+        <class name="io.flutter.plugins.**"/>
+    </keep>
+    <keep>
+        <class name="com.opentok.android.**"/>
+        <class name="com.opentok.impl.**"/>
+        <class name="com.opentok.android.SubscriberKit"/>
+        <class name="com.opentok.android.SubscriberKit$SubscriberAudioStats"/>
+        <class name="com.opentok.android.SubscriberKit$SubscriberVideoStats"/>
+        <class name="com.opentok.android.PublisherKit"/>
+        <class name="com.opentok.android.PublisherKit$PublisherAudioStats"/>
+        <class name="com.opentok.android.PublisherKit$PublisherVideoStats"/>
+    </keep>
+    <keep>
+        <class name="com.vonage.**"/>
+        <class name="com.vonage.webrtc.**"/>
+        <class name="com.vonage.webrtc.voiceengine.**"/>
+    </keep>
+</config>
