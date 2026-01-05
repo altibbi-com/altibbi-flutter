@@ -8,7 +8,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:permission_handler/permission_handler.dart';
-import 'package:open_filex/open_filex.dart';
+// import 'package:open_filex/open_filex.dart';  // Commented out due to READ_MEDIA permissions requirement
 import 'package:http/http.dart' as http;
 import 'package:path_provider/path_provider.dart';
 
@@ -122,7 +122,9 @@ class _ConsultationState extends State<Consultation> {
       final tempDir = "/storage/emulated/0/Download";
       final savePath = '${tempDir}/$fileName';
       var prescriptionPath = await apiService.getPrescription(int.parse(prescriptionID.text),savePath);
-      OpenFilex.open(prescriptionPath);
+      // OpenFilex.open(prescriptionPath);  // Commented out - open_filex requires forbidden permissions
+      // Use alternative method to open files without requiring media permissions
+      print("Prescription saved to: $prescriptionPath");
     }
   }
 

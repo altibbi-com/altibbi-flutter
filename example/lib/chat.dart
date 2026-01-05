@@ -132,14 +132,40 @@ class _ChatScreenState extends State<ChatScreen> {
   String? path;
 
   Future<void> _selectImage() async {
-    final cameraStatus = await Permission.camera.status;
-    if (!cameraStatus.isGranted) {
-      final status = await Permission.camera.request();
-      if (!status.isGranted) return;
+    final ImageSource? source = await showDialog<ImageSource>(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Select Image Source'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              leading: const Icon(Icons.camera_alt),
+              title: const Text('Camera'),
+              onTap: () => Navigator.pop(context, ImageSource.camera),
+            ),
+            ListTile(
+              leading: const Icon(Icons.photo_library),
+              title: const Text('Gallery'),
+              onTap: () => Navigator.pop(context, ImageSource.gallery),
+            ),
+          ],
+        ),
+      ),
+    );
+
+    if (source == null) return;
+
+    if (source == ImageSource.camera) {
+      final cameraStatus = await Permission.camera.status;
+      if (!cameraStatus.isGranted) {
+        final status = await Permission.camera.request();
+        if (!status.isGranted) return;
+      }
     }
 
     final ImagePicker picker = ImagePicker();
-    final XFile? image = await picker.pickImage(source: ImageSource.camera);
+    final XFile? image = await picker.pickImage(source: source);
 
     if (image != null) {
       setState(() {

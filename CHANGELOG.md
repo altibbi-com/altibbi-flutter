@@ -67,3 +67,6 @@
 
 ## 0.2.7
 * Adding Logs functionality and Errors tracking 
+
+## 0.2.8
+* Clean out Android permission 

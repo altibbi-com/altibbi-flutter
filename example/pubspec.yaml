@@ -18,7 +18,7 @@ dependencies:
     sdk: flutter
 
   path_provider: ^2.1.1
-  open_filex: 4.7.0
+  # open_filex: 4.7.0  # Commented out due to READ_MEDIA permissions requirement
   image_picker: 1.0.7
   file_picker: 8.0.0+1
   permission_handler: 12.0.0+1
