@@ -30,7 +30,7 @@ android {
 
     defaultConfig {
         applicationId = "com.example.test_library"
-        minSdk = 23
+        minSdk = 24
         targetSdk = flutter.targetSdkVersion
         versionCode = flutter.versionCode
         versionName = flutter.versionName
@@ -51,6 +51,12 @@ android {
             if (dexprotectorConfig.exists()) {
                 ext.set("dexprotector.configFile", dexprotectorConfig.absolutePath)
             }
+        }
+    }
+
+    packagingOptions {
+        jniLibs {
+            useLegacyPackaging = false
         }
     }
 }

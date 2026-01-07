@@ -70,3 +70,6 @@
 
 ## 0.2.8
 * Clean out Android permission 
+
+## 0.2.9
+* Android 16KB support 

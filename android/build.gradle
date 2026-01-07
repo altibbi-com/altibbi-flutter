@@ -2,14 +2,14 @@ group 'com.altibbi.flutter.altibbi'
 version '1.0-SNAPSHOT'
 
 buildscript {
-    ext.kotlin_version = '1.7.10'
+    ext.kotlin_version = '1.9.22'
     repositories {
         google()
         mavenCentral()
     }
 
     dependencies {
-        classpath 'com.android.tools.build:gradle:7.3.0'
+        classpath 'com.android.tools.build:gradle:8.5.1'
         classpath "org.jetbrains.kotlin:kotlin-gradle-plugin:$kotlin_version"
     }
 }
@@ -25,7 +25,7 @@ apply plugin: 'com.android.library'
 apply plugin: 'kotlin-android'
 
 android {
-    compileSdkVersion 31
+    compileSdkVersion 34
     namespace "com.altibbi.flutter.altibbi"
 
     compileOptions {
@@ -45,8 +45,14 @@ android {
         minSdkVersion 23
     }
 
-    dependencies {
-        implementation 'com.opentok.android:opentok-android-sdk:2.24.2'
-        implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
+    packagingOptions {
+        jniLibs {
+            useLegacyPackaging = false
+        }
     }
+}
+
+dependencies {
+    implementation 'com.opentok.android:opentok-android-sdk:2.30.0'
+    implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
 }
