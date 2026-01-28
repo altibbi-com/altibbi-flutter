@@ -30,6 +30,45 @@ class MyChannelHandler extends GroupChannelHandler {
   }
 }
 
+class MyConnectionHandler extends ConnectionHandler {
+  final Function(String)? onConnectionError;
+  final Function()? onReconnectFailed;
+  final Function(String)? onDisconnectedCallback;
+
+  MyConnectionHandler({
+    this.onConnectionError,
+    this.onReconnectFailed,
+    this.onDisconnectedCallback,
+  });
+
+  @override
+  void onConnected(String userId, bool isReconnection) {
+    print('Sendbird connected: userId=$userId, isReconnection=$isReconnection');
+  }
+
+  @override
+  void onDisconnected(String userId) {
+    print('Sendbird disconnected: userId=$userId');
+    onDisconnectedCallback?.call(userId);
+  }
+
+  @override
+  void onReconnectStarted() {
+    print('Sendbird reconnection started');
+  }
+
+  @override
+  void onReconnectSucceeded() {
+    print('Sendbird reconnection succeeded');
+  }
+
+  @override
+  void onReconnectFailed() {
+    print('Sendbird reconnection failed');
+    onReconnectFailed?.call();
+  }
+}
+
 class ChatScreen extends StatefulWidget {
   const ChatScreen({super.key});
 
@@ -45,6 +84,8 @@ class _ChatScreenState extends State<ChatScreen> {
   late GroupChannel groupChannels;
 
   var consultation;
+  bool _isConnected = false;
+  String? _connectionError;
 
   TextEditingController messageController = TextEditingController();
 
@@ -52,6 +93,13 @@ class _ChatScreenState extends State<ChatScreen> {
   void initState() {
     super.initState();
     initializeSendbird();
+  }
+
+  @override
+  void dispose() {
+    AltibbiChat().removeConnectionHandler('myConnectionHandler');
+    AltibbiChat().removeChannelHandler('myChannelHandler');
+    super.dispose();
   }
 
   void _scrollToBottom() {
@@ -66,66 +114,185 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   Future<void> initializeSendbird() async {
-    consultation = await ApiService().getLastConsultation();
     try {
-      AltibbiChat().init(consultation: consultation);
-    } catch (e){
-    }
-    try{
-      MyChannelHandler channelHandler = MyChannelHandler(
+      consultation = await ApiService().getLastConsultation();
+
+      MyConnectionHandler connectionHandler = MyConnectionHandler(
+        onConnectionError: (String error) {
+          setState(() {
+            _connectionError = error;
+            _isConnected = false;
+          });
+          print('Connection error: $error');
+        },
+        onReconnectFailed: () {
+          setState(() {
+            _connectionError = 'Reconnection failed. Please check your connection.';
+            _isConnected = false;
+          });
+          print('Reconnection failed');
+          _attemptReconnection();
+        },
+        onDisconnectedCallback: (String userId) {
+          setState(() {
+            _isConnected = false;
+          });
+          print('Disconnected: $userId');
+        },
+      );
+      AltibbiChat().addConnectionHandler('myConnectionHandler', connectionHandler);
+
+      try {
+        await AltibbiChat().init(consultation: consultation);
+        setState(() {
+          _isConnected = true;
+          _connectionError = null;
+        });
+        print('Sendbird initialized successfully');
+      } on ConnectionCanceledException catch (e) {
+        setState(() {
+          _connectionError = 'Connection was canceled. Error code: ${e.code}';
+          _isConnected = false;
+        });
+        print('ConnectionCanceledException: ${e.code} - ${e.message}');
+        _attemptReconnection();
+      } on LoginTimeoutException catch (e) {
+        setState(() {
+          _connectionError = 'Login timeout. Please check your network connection. Error code: ${e.code}';
+          _isConnected = false;
+        });
+        print('LoginTimeoutException: ${e.code} - ${e.message}');
+        _attemptReconnection();
+      } catch (e) {
+        setState(() {
+          _connectionError = 'Failed to initialize Sendbird: $e';
+          _isConnected = false;
+        });
+        print('Error initializing Sendbird: $e');
+      }
+
+      try {
+        MyChannelHandler channelHandler = MyChannelHandler(
           onChannelMessageReceived: (BaseMessage message) {
             setState(() {
               messages.add(message);
               _scrollToBottom();
             });
           },
-          consultation: consultation
-      );
-      AltibbiChat().addChannelHandler('myChannelHandler', channelHandler);
-    }catch(e){
-    }
-
-    try{
-      PreviousMessageListQuery previousMessageListQuery = PreviousMessageListQuery(channelType: ChannelType.group,
-          channelUrl: "channel_${consultation.chatConfig!.groupId!}");
-      previousMessageListQuery.limit = 200;
-      var messages = await previousMessageListQuery.next();
-      while (messages.isNotEmpty) {
-        messages.addAll(messages);
-        messages = await previousMessageListQuery.next();
+          consultation: consultation,
+        );
+        AltibbiChat().addChannelHandler('myChannelHandler', channelHandler);
+      } catch (e) {
+        print('Error setting up channel handler: $e');
       }
-    }catch(e){
-    }
 
+      try {
+        PreviousMessageListQuery previousMessageListQuery = PreviousMessageListQuery(
+          channelType: ChannelType.group,
+          channelUrl: "channel_${consultation.chatConfig!.groupId!}",
+        );
+        previousMessageListQuery.limit = 200;
+        var fetchedMessages = await previousMessageListQuery.next();
+        List<BaseMessage> allMessages = [];
+        while (fetchedMessages.isNotEmpty) {
+          allMessages.addAll(fetchedMessages);
+          fetchedMessages = await previousMessageListQuery.next();
+        }
+        setState(() {
+          messages = allMessages.reversed.toList();
+        });
+      } catch (e) {
+        print('Error loading previous messages: $e');
+      }
+    } catch (e) {
+      setState(() {
+        _connectionError = 'Failed to load consultation: $e';
+      });
+      print('Error in initializeSendbird: $e');
+    }
+  }
+
+  Future<void> _attemptReconnection() async {
+    try {
+      print('Attempting to reconnect...');
+      bool reconnected = await AltibbiChat().reconnect();
+      if (reconnected) {
+        setState(() {
+          _isConnected = true;
+          _connectionError = null;
+        });
+        print('Reconnection successful');
+      } else {
+        setState(() {
+          _connectionError = 'Reconnection failed. Please try again later.';
+        });
+        print('Reconnection failed');
+      }
+    } catch (e) {
+      setState(() {
+        _connectionError = 'Reconnection error: $e';
+      });
+      print('Error during reconnection: $e');
+    }
   }
 
   Future<void> _sendMessage(String message) async {
+    if (!_isConnected) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Not connected. Please wait for connection to be established.'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
 
-    try{
+    if (message.trim().isEmpty) {
+      return;
+    }
+
+    try {
       GroupChannel groupChannels = await AltibbiChat().getGroupChannel(consultation);
-      var msg = groupChannels.sendUserMessage(UserMessageCreateParams(message: message));
+      var msg = await groupChannels.sendUserMessage(UserMessageCreateParams(message: message));
       setState(() {
         messages.add(msg);
         _textEditingController.clear();
       });
-      if(messages.length >5){
+      if (messages.length > 5) {
         _scrollToBottom();
       }
-    }catch(e){
-    }
-
-    try{
-      PreviousMessageListQuery previousMessageListQuery = PreviousMessageListQuery(channelType: ChannelType.group,
-          channelUrl: "channel_${consultation.chatConfig!.groupId!}");
-      previousMessageListQuery.limit = 200;
-      var messages = await previousMessageListQuery.next();
-      while (messages.isNotEmpty) {
-        messages.addAll(messages);
-        messages = await previousMessageListQuery.next();
-      }
-
-
-    }catch(e){
+    } on ConnectionCanceledException catch (e) {
+      setState(() {
+        _isConnected = false;
+        _connectionError = 'Connection canceled while sending message. Error code: ${e.code}';
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to send message: Connection canceled'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      _attemptReconnection();
+    } on LoginTimeoutException catch (e) {
+      setState(() {
+        _isConnected = false;
+        _connectionError = 'Login timeout while sending message. Error code: ${e.code}';
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to send message: Login timeout'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      _attemptReconnection();
+    } catch (e) {
+      print('Error sending message: $e');
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Failed to send message: $e'),
+          backgroundColor: Colors.red,
+        ),
+      );
     }
   }
 
@@ -187,9 +354,54 @@ class _ChatScreenState extends State<ChatScreen> {
     return Scaffold(
       appBar: AppBar(
         title: Text('Chat Screen'),
+        actions: [
+          Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Row(
+              children: [
+                Icon(
+                  _isConnected ? Icons.wifi : Icons.wifi_off,
+                  color: _isConnected ? Colors.green : Colors.red,
+                  size: 20,
+                ),
+                const SizedBox(width: 4),
+                Text(
+                  _isConnected ? 'Connected' : 'Disconnected',
+                  style: TextStyle(
+                    color: _isConnected ? Colors.green : Colors.red,
+                    fontSize: 12,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
       body: Column(
         children: [
+          if (_connectionError != null)
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(8.0),
+              color: Colors.orange,
+              child: Row(
+                children: [
+                  const Icon(Icons.warning, color: Colors.white),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      _connectionError!,
+                      style: const TextStyle(color: Colors.white),
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.refresh, color: Colors.white),
+                    onPressed: _attemptReconnection,
+                    tooltip: 'Retry connection',
+                  ),
+                ],
+              ),
+            ),
           Expanded(
             child: FutureBuilder(
               future: Future.delayed(const Duration(milliseconds: 500)),
@@ -245,10 +457,12 @@ class _ChatScreenState extends State<ChatScreen> {
                     ),
                     // handle text change to send user typing status
                     onChanged: (String text) async {
-                      try{
+                      if (!_isConnected) return;
+                      try {
                         GroupChannel groupChannels = await AltibbiChat().getGroupChannel(consultation);
                         groupChannels.startTyping();
-                      }catch(e){
+                      } catch (e) {
+                        print('Error starting typing indicator: $e');
                       }
                     },
                   ),
