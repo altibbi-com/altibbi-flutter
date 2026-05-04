@@ -43,6 +43,7 @@ android {
 
     defaultConfig {
         minSdkVersion 23
+        consumerProguardFiles 'proguard-rules.pro'
     }
 
     packagingOptions {
