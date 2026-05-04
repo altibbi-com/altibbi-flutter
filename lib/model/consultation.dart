@@ -17,6 +17,7 @@ class Consultation {
   String? status;
   int? isFulfilled;
   int? parentConsultationId;
+  String? scheduledTo;
   int? consultationCategoryId;
   String? createdAt;
   String? updatedAt;
@@ -43,6 +44,7 @@ class Consultation {
     this.status,
     this.isFulfilled,
     this.parentConsultationId,
+    this.scheduledTo,
     this.consultationCategoryId,
     this.createdAt,
     this.updatedAt,
@@ -75,6 +77,7 @@ class Consultation {
       status: json['status'] as String?,
       isFulfilled: json['is_fulfilled'] as int?,
       parentConsultationId: json['parent_consultation_id'] as int?,
+      scheduledTo: json['scheduled_to'] as String?,
       consultationCategoryId: json['consultation_category_id'] as int?,
       createdAt: json['created_at'] as String?,
       updatedAt: json['updated_at'] as String?,

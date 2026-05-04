@@ -4,6 +4,7 @@ import 'package:altibbi/enum.dart';
 import 'package:altibbi/model/Article.dart';
 import 'package:altibbi/model/media.dart';
 import 'package:altibbi/model/consultation.dart';
+import 'package:altibbi/model/consultation_available_shifts.dart';
 import 'package:altibbi/model/predict_specialty.dart';
 import 'package:altibbi/model/predict_summary.dart';
 import 'package:altibbi/model/sina/chatMessage.dart';
@@ -374,6 +375,7 @@ class ApiService {
       required int userID,
       List<String>? mediaIDs,
       String? followUpId,
+      String? scheduledTo,
       String? forceWhiteLabelingPartnerName,
       int? consultationCategoryId}) async {
     if (!Medium.values.contains(medium)) {
@@ -390,6 +392,9 @@ class ApiService {
     };
     if (followUpId != null) {
       body['parent_consultation_id'] = followUpId;
+    }
+    if (scheduledTo != null) {
+      body['scheduled_to'] = scheduledTo;
     }
     if (forceWhiteLabelingPartnerName != null && forceWhiteLabelingPartnerName.length > 3) {
       body['question'] = "${body['question']} ~$forceWhiteLabelingPartnerName~";
@@ -424,6 +429,22 @@ class ApiService {
       final responseData = json.decode(response.body);
       final consultation = Consultation.fromJson(responseData);
       return consultation;
+    } else {
+      _throwApiError(response);
+    }
+  }
+
+  /// Retrieves the available shifts for the consultation with the given [consultationID] on [date].
+  /// Returns a [ConsultationAvailableShifts] object if the API call is successful.
+  Future<ConsultationAvailableShifts> getConsultationAvailableShifts(
+      int consultationID, String date) async {
+    final response = await callApi(
+        endpoint: 'consultations/$consultationID/available-shifts',
+        method: 'get',
+        body: {"date": date});
+    if (response.statusCode == 200) {
+      final responseData = json.decode(response.body);
+      return ConsultationAvailableShifts.fromJson(responseData);
     } else {
       _throwApiError(response);
     }
