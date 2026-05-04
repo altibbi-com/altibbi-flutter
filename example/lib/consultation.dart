@@ -24,6 +24,10 @@ class _ConsultationState extends State<Consultation> {
   TextEditingController deleteIdController = TextEditingController();
   TextEditingController questionBody = TextEditingController();
   TextEditingController prescriptionID = TextEditingController();
+  TextEditingController scheduledToController = TextEditingController();
+  TextEditingController shiftsConsultationIdController =
+      TextEditingController();
+  TextEditingController shiftsDateController = TextEditingController();
 
   String? errorText = "";
 
@@ -34,6 +38,20 @@ class _ConsultationState extends State<Consultation> {
   String? errorEmptyBody = "";
 
   String? path;
+
+  String? errorShiftsText;
+
+  @override
+  void dispose() {
+    idController.dispose();
+    deleteIdController.dispose();
+    questionBody.dispose();
+    prescriptionID.dispose();
+    scheduledToController.dispose();
+    shiftsConsultationIdController.dispose();
+    shiftsDateController.dispose();
+    super.dispose();
+  }
 
   Future<void> _selectImage() async {
     final ImageSource? source = await showDialog<ImageSource>(
@@ -152,11 +170,16 @@ class _ConsultationState extends State<Consultation> {
          media = await apiService.uploadMedia(File(path!));
       }
       try{
+        final scheduled =
+            scheduledToController.text.trim().isEmpty
+                ? null
+                : scheduledToController.text.trim();
         var consultation = await apiService.createConsultation(
           question: questionBody.text,
           medium: selectedMedium,
           userID: 1, //Assigning consultation to User ID
           mediaIDs: media != null ? [media.id] : [] ,
+          scheduledTo: scheduled,
         );
         if(consultation  != null && consultation.pusherChannel != null){
           Navigator.push(
@@ -190,6 +213,76 @@ class _ConsultationState extends State<Consultation> {
   void getConsultationList () async {
     var consultationList = await apiService.getConsultationList(page: 1, perPage: 30);
     print("Consultation List Length = ${consultationList.length}");
+  }
+
+  Future<void> fetchAvailableShifts() async {
+    final idText = shiftsConsultationIdController.text.trim();
+    final dateText = shiftsDateController.text.trim();
+    if (idText.isEmpty || dateText.isEmpty) {
+      setState(() {
+        errorShiftsText = 'Enter consultation ID and date';
+      });
+      return;
+    }
+    setState(() => errorShiftsText = null);
+    int id;
+    try {
+      id = int.parse(idText);
+    } catch (_) {
+      setState(() {
+        errorShiftsText = 'Consultation ID must be a number';
+      });
+      return;
+    }
+    try {
+      final shifts =
+          await apiService.getConsultationAvailableShifts(id, dateText);
+      if (!mounted) return;
+      await showDialog<void>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          title: const Text('Available shifts'),
+          content: SizedBox(
+            width: double.maxFinite,
+            child: shifts.shifts.isEmpty
+                ? const Text('No shifts returned')
+                : ListView.builder(
+                    shrinkWrap: true,
+                    itemCount: shifts.shifts.length,
+                    itemBuilder: (_, i) {
+                      final s = shifts.shifts[i];
+                      final parts = <String>[
+                        if (s.shiftValue() != null) 'Value: ${s.shiftValue()}',
+                        if (s.booked != null) 'Booked: ${s.booked}',
+                      ];
+                      return ListTile(
+                        title: Text(s.displayText()),
+                        subtitle:
+                            parts.isEmpty ? null : Text(parts.join(' · ')),
+                        onTap: () {
+                          final value = s.shiftValue();
+                          if (value != null) {
+                            scheduledToController.text = value;
+                          }
+                          Navigator.pop(ctx);
+                        },
+                      );
+                    },
+                  ),
+          ),
+          actions: [
+            TextButton(
+                onPressed: () => Navigator.pop(ctx),
+                child: const Text('Close')),
+          ],
+        ),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to load shifts: $e')),
+      );
+    }
   }
 
   void getAiSupport () async {
@@ -259,6 +352,17 @@ class _ConsultationState extends State<Consultation> {
                     border: const OutlineInputBorder(),
                   ),
                 ),
+                const SizedBox(height: 16),
+                TextField(
+                  controller: scheduledToController,
+                  style: const TextStyle(fontSize: 16),
+                  decoration: const InputDecoration(
+                    hintText:
+                        'Optional: scheduled_to (e.g. ISO-8601 from available shifts)',
+                    contentPadding: EdgeInsets.all(16),
+                    border: OutlineInputBorder(),
+                  ),
+                ),
                 const SizedBox(height: 20),
                 Row(
                   children: [
@@ -307,6 +411,44 @@ class _ConsultationState extends State<Consultation> {
                       ),
                     ),
                   ],
+                ),
+                const SizedBox(height: 24),
+                const Text(
+                  'Available shifts (consultations/{id}/available-shifts)',
+                  style: TextStyle(fontWeight: FontWeight.w600),
+                ),
+                const SizedBox(height: 8),
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextFormField(
+                        keyboardType: TextInputType.number,
+                        controller: shiftsConsultationIdController,
+                        decoration: InputDecoration(
+                          labelText: 'Consultation ID',
+                          errorText: errorShiftsText,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: TextFormField(
+                        controller: shiftsDateController,
+                        decoration: const InputDecoration(
+                          labelText: 'Date',
+                          hintText: 'YYYY-MM-DD',
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+                SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton(
+                    onPressed: fetchAvailableShifts,
+                    child: const Text('Fetch available shifts'),
+                  ),
                 ),
                 const SizedBox(height: 40),
                 Row(
