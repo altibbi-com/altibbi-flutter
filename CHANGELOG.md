@@ -76,3 +76,6 @@
 
 ## 0.3.0
 * Android 16KB support 
+
+## 0.3.0
+Addition of user's fields
