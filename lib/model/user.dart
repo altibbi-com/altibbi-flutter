@@ -15,6 +15,8 @@ class User {
   String? alcoholic;
   String? relationType;
   String? maritalStatus;
+  String? tpaCode;
+  String? payerName;
   String? createdAt;
   String? updatedAt;
 
@@ -36,6 +38,8 @@ class User {
     this.alcoholic,
     this.relationType,
     this.maritalStatus,
+    this.tpaCode,
+    this.payerName,
     this.createdAt,
     this.updatedAt
   });
@@ -57,6 +61,8 @@ class User {
     alcoholic = json['alcoholic'] as String?;
     maritalStatus = json['marital_status'] as String?;
     relationType = json['relation_type'] as String?;
+    tpaCode = json['tpa_code'] as String?;
+    payerName = json['payer_name'] as String?;
     createdAt = json['created_at'] as String?;
     updatedAt = json['updated_at'] as String?;
   }
@@ -77,6 +83,8 @@ class User {
       'smoker': smoker,
       'alcoholic': alcoholic,
       'marital_status': maritalStatus,
+      'tpa_code': tpaCode,
+      'payer_name': payerName,
     };
   }
 
